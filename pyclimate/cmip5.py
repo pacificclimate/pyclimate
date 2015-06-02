@@ -5,11 +5,15 @@ class Cmip5File():
     def __init__(self, fp):
         '''
         Parses a PCIC CMIP5 file path to extract specific metadata.
-        Pattern is "<base_dir>/<institue>/<model>/<experiment>/<frequency>/<modeling realm>/<MIP table>/<ensemble member>/<version>/<variable name>/<CMOR filename>.nc"
+        Pattern is "<base_dir>/<institue>/<model>/<experiment>/<frequency>/<modeling realm>/<CMOR table>/<ensemble member>/<version>/<variable name>/<CMOR filename>.nc"
                         -11       -10       -9        -8           -7            -6             -5           -4              -3           -2              -1
-        CMOR filename is of pattern <variable_name>_<MIP table>_<model>_<experiment>_<ensemble member>_<temporal subset>.nc
+        CMOR filename is of pattern <variable_name>_<CMOR table>_<model>_<experiment>_<ensemble member>_<temporal subset>.nc
                                            1             2         3         4               5                  6
         ex: root_dir/CCCMA/CanCM4/historical/day/atmos/day/r1i1p1/v20120612/tasmax/tasmax_day_CanCM4_historical_r1i1p1_19610101-20051231.nc
+
+        Metadata requirements are found: http://cmip-pcmdi.llnl.gov/cmip5/docs/CMIP5_output_metadata_requirements.pdf
+        Data Reference Syntax: http://cmip-pcmdi.llnl.gov/cmip5/docs/cmip5_data_reference_syntax.pdf
+        Standard Output (CMOR Tables): http://cmip-pcmdi.llnl.gov/cmip5/docs/standard_output.pdf
         '''
 
         dirname, basename = os.path.split(os.path.abspath(fp))

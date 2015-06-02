@@ -27,10 +27,10 @@ def nc_copy_dimvar(dsin, dsout, varname):
     outvar = dsout.createVariable(varname, invar.datatype, invar.dimensions)
     nc_copy_atts(dsin, dsout, varname, varname)
     outvar[:] = invar[:]
-    print 'Copied dimvar {}'.format(varname)
+    log.debug('Copied dimvar {}'.format(varname))
 
     if 'bounds' in invar.ncattrs():
-        print 'found bounds: {}'.format(outvar.getncattr('bounds'))
+        log.debug('found bounds: {}'.format(outvar.getncattr('bounds')))
         nc_copy_var(dsin, dsout, invar.getncattr('bounds'), outvar.getncattr('bounds'), copy_data=True)
 
 def nc_copy_dim(dsin, dsout, dimname):
