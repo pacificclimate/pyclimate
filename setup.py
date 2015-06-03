@@ -14,6 +14,7 @@ setup(
     description = ("A collection of helpers for processing CMIP5 climate data"),
     url="http://www.pacificclimate.org/",
     packages=find_packages('.'),
+    scripts = ['scripts/gen_degree_days.py'],
     install_requires=['netCDF4'],
     long_description=read('README.md')
     )
