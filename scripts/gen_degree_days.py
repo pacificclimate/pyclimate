@@ -4,6 +4,7 @@ import os
 import sys
 import fnmatch
 import logging
+import argparse
 
 import numpy as np
 from netCDF4 import Dataset
@@ -109,10 +110,8 @@ def calc_tas(var_set, outdir):
         ffd.ncvar[i,:,:] = np.where(var_tasmin[i,:,:] > 273.15, 1, 0)
         pas.ncvar[i,:,:] = np.where(var_tasmax[i,:,:] < 273.15, var_pr[i,:,:] , 0)
 
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
-
-    base_dir = '/home/data/projects/rat/data/cmip5/test_symlink_tree'
+def main(args):
+    base_dir = args.indir
     log.info('Getting file list')
     file_list = get_recursive_file_list(base_dir, '*.nc')
     tasmax_files = [x for x in file_list if 'tasmax' in x]
@@ -128,4 +127,17 @@ if __name__ == '__main__':
 
     for i in range(len(model_sets)):
         log.info("[{}/{}]".format(i, len(model_sets)))
-        model_sets['tas'] = calc_tas(model_sets[i], '/home/data/scratch/bveerman/')
+        model_sets['tas'] = calc_tas(model_sets[i], args.outdir)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('indir', help='Input directory')
+    parser.add_argument('outdir', help='Output directory')
+    parser.add_argument('-v', '--variable', nargs= '+',  help='Variable(s) to calculate. Ex: -v var1 var2 var3')
+    parser.add_argument('--progress', default=False, action='store_true', help='Display percentage progress')
+    args = parser.parse_args()
+
+    logging.basicConfig(level=logging.INFO)
+
+    main(args)
