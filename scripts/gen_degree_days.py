@@ -9,8 +9,9 @@ import argparse
 import numpy as np
 from netCDF4 import Dataset
 
-from pyclimate.cmip5 import Cmip5File
+from pyclimate.cmip5 import Cmip5File, model_run_filter
 from pyclimate.nchelpers import *
+from pyclimate import get_model_set
 
 log = logging.getLogger(__name__)
 
@@ -114,14 +115,23 @@ def main(args):
     base_dir = args.indir
     log.info('Getting file list')
     file_list = get_recursive_file_list(base_dir, '*.nc')
-    tasmax_files = [x for x in file_list if 'tasmax' in x]
+    log.info('Found {} netcdf files'.format(len(file_list)))
+
+    if args.model_filter:
+        log.info('Filtering to requested set')
+        _filter = get_model_set(args.model_filter)
+        file_list = [x for x in file_list if model_run_filter(x, _filter)]
+        log.info('{} resulting files'.format(len(file_list)))
 
     log.info('Determining valid model sets')
+    tasmax_files = [x for x in file_list if 'tasmax' in x]
     tasmin_files = [x.replace('tasmax', 'tasmin') for x in tasmax_files]
     tasmin_files_available = [x in file_list for x in tasmin_files]
     pr_files = [x.replace('tasmax', 'pr') for x in tasmax_files]
     pr_files_available = [x in file_list for x in pr_files]
     files_available = [all((x, y)) for x, y in zip(tasmin_files_available, pr_files_available)]
+
+    log.info('Found {} tasmax, tasmin, pr model sets'.format(len(files_available)))
 
     model_sets = [{'tasmax': Cmip5File(tasmax), 'tasmin': Cmip5File(tasmin), 'pr': Cmip5File(pr)} for tasmax, tasmin, pr, file_available in zip(tasmax_files, tasmin_files, pr_files, files_available) if file_available]
 
@@ -135,6 +145,7 @@ if __name__ == '__main__':
     parser.add_argument('indir', help='Input directory')
     parser.add_argument('outdir', help='Output directory')
     parser.add_argument('-v', '--variable', nargs= '+',  help='Variable(s) to calculate. Ex: -v var1 var2 var3')
+    parser.add_argument('-m', '--model_filter', help='Predefined model set to restrict file input to')
     parser.add_argument('--progress', default=False, action='store_true', help='Display percentage progress')
     args = parser.parse_args()
 

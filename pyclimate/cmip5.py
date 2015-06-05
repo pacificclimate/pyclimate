@@ -56,3 +56,12 @@ class Cmip5File():
     @t_end.setter
     def t_end(self, value):
         self.trange = '-'.join(self.trange.split('-')[1], value)
+
+def model_run_filter(fpath, _filter):
+    '''
+    Filters a file_list to model/runs within the filter
+    '''
+    cf = Cmip5File(fpath)
+    if cf.model in _filter.keys() and cf.run in _filter[cf.model]:
+        return True
+    return False
