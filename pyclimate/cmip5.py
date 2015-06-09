@@ -57,11 +57,11 @@ class Cmip5File():
     def t_end(self, value):
         self.trange = '-'.join(self.trange.split('-')[1], value)
 
-def model_run_filter(fpath, _filter):
+def model_run_filter(fpath, valid_model_runs):
     '''
-    Filters a file_list to model/runs within the filter
+    Determines if a file path is within the provided filter
     '''
     cf = Cmip5File(fpath)
-    if cf.model in _filter.keys() and cf.run in _filter[cf.model]:
+    if cf.model in valid_model_runs.keys() and cf.run in valid_model_runs[cf.model]:
         return True
     return False
