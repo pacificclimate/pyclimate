@@ -17,22 +17,6 @@ def nc_copy_atts(dsin, dsout, varin=False, varout=False):
         dsout.setncatts({k: dsin.getncattr(k) for k in dsin.ncattrs()})
         log.debug('Copied global attributes')
 
-def nc_copy_dimvar(dsin, dsout, varname):
-    '''
-    Naively copies a variable and its data. Suitable only for dimvars.
-    Searches for and also copies dimvar bounds if it exists
-    '''
-
-    invar = dsin.variables[varname]
-    outvar = dsout.createVariable(varname, invar.datatype, invar.dimensions)
-    nc_copy_atts(dsin, dsout, varname, varname)
-    outvar[:] = invar[:]
-    log.debug('Copied dimvar {}'.format(varname))
-
-    if 'bounds' in invar.ncattrs():
-        log.debug('found bounds: {}'.format(outvar.getncattr('bounds')))
-        nc_copy_var(dsin, dsout, invar.getncattr('bounds'), outvar.getncattr('bounds'), copy_data=True)
-
 def nc_copy_dim(dsin, dsout, dimname):
     '''
     Copy a named dimension from an input file to an output file
@@ -41,32 +25,41 @@ def nc_copy_dim(dsin, dsout, dimname):
     dim = dsin.dimensions[dimname]
     dsout.createDimension(dimname, len(dim) if not dim.isunlimited() else None)
     log.debug('Created dimension {}'.format(dimname))
-
-def nc_copy_variable_dimensions(dsin, dsout, varin, varout):
-    '''
-    Copies all dimensions (and dimvars) defining variable
-    '''
-
-    dims = dsin.variables[varin].dimensions
-    for dim in dims:
-        if dim not in dsout.dimensions:
-            nc_copy_dim(dsin, dsout, dim)
-            if dim in dsin.variables:
-                log.debug('Copying dimvar for {}'.format(dim))
-                nc_copy_dimvar(dsin, dsout, dim)
+    if dimname in dsin.variables:
+        log.debug('Copying dimvar for {}'.format(dimname))
+        nc_copy_var(dsin, dsout, dimname, dimname, copy_data=True, copy_attrs=True)
 
 def nc_copy_var(dsin, dsout, varin, varout, copy_data=False, copy_attrs=False):
     '''
     Copies a variable from one NetCDF to another with dimensions, dimvars, and attributes
     '''
 
-    nc_copy_variable_dimensions(dsin, dsout, varin, varout)
+    log.debug('nc_copy_var: Copying variable {} to {}'.format(varin, varout))
+    for dim in dsin.variables[varin].dimensions:
+        if dim not in dsout.dimensions:
+            nc_copy_dim(dsin, dsout, dim)
+
+    if varout in dsout.variables.keys():
+        # Avoid attempting to copy the dimvar twice. copy_var -> copy_dim -> copy_(dim)var = failure
+        return
+
     ncvarin = dsin.variables[varin]
     ncvarout = dsout.createVariable(varout, ncvarin.datatype, ncvarin.dimensions)
+
+    if 'bounds' in ncvarin.ncattrs():
+        log.debug('found bounds: {}'.format(ncvarin.getncattr('bounds')))
+        nc_copy_var(dsin, dsout, ncvarin.getncattr('bounds'), ncvarin.getncattr('bounds'), copy_data=True, copy_attrs=True)
+
     if copy_attrs:
         nc_copy_atts(dsin, dsout, varin, varout)
     if copy_data:
-        ncvarout[:] = ncvarin[:]
+        if len(ncvarin.dimensions) > 3:
+            raise AssertionError('This function does not support copying data for a variable with 4+ dimensions')
+        # Itteratively copy data if 3 dimensions
+        if len(ncvarin.shape) > 2:
+            for i in range(ncvarin.shape[0]):
+                ncvarout[i,:,:] = ncvarin[i,:,:]
         log.debug('Copied variable data')
-        
+
+    log.debug('Done copying variable')
     return ncvarout
