@@ -71,3 +71,22 @@ def nc_3d_bare(request):
 
     return nc
 
+@pytest.fixture(scope='module')
+def cmip5_file_list():
+    fl = '''/root/directory/CCCMA/CanESM2/rcp85/day/atmos/day/r1i1p1/v20120407/tasmin/tasmin_day_CanESM2_rcp85_r1i1p1_20060101-21001231.nc
+/root/directory/CCCMA/CanESM2/rcp85/day/atmos/day/r1i1p1/v20120407/pr/pr_day_CanESM2_rcp85_r1i1p1_20060101-21001231.nc
+/root/directory/CCCMA/CanESM2/rcp85/day/atmos/day/r1i1p1/v20120407/tasmax/tasmax_day_CanESM2_rcp85_r1i1p1_20060101-21001231.nc
+/root/directory/CCCMA/CanESM2/rcp45/day/atmos/day/r1i1p1/v20120410/tasmin/tasmin_day_CanESM2_rcp45_r1i1p1_20060101-23001231.nc
+/root/directory/CCCMA/CanESM2/rcp45/day/atmos/day/r1i1p1/v20120410/tasmax/tasmax_day_CanESM2_rcp45_r1i1p1_20060101-23001231.nc
+/root/directory/CCCMA/CanESM2/historical/day/atmos/day/r1i1p1/v20120410/pr/pr_day_CanESM2_historical_r1i1p1_18500101-20051231.nc
+/root/directory/CCCMA/CanESM2/historical/day/atmos/day/r1i1p1/v20120410/tasmax/tasmax_day_CanESM2_historical_r1i1p1_18500101-20051231.nc
+/root/directory/CCCMA/CanESM2/rcp26/day/atmos/day/r1i1p1/v20120410/tasmax/tasmax_day_CanESM2_rcp26_r1i1p1_20060101-23001231.nc
+/root/directory/CCCMA/CanESM2/rcp26/day/atmos/day/r1i1p1/v20120410/pr/pr_day_CanESM2_rcp26_r1i1p1_20060101-23001231.nc
+/root/directory/CCCMA/CanESM2/rcp26/day/atmos/day/r1i1p1/v20120410/tasmin/tasmin_day_CanESM2_rcp26_r1i1p1_20060101-23001231.nc
+/root/directory/CCCMA/CanCM4/rcp45/day/atmos/day/r1i1p1/v20120612/pr/pr_day_CanCM4_rcp45_r1i1p1_20060101-20351231.nc
+/root/directory/CCCMA/CanCM4/rcp45/day/atmos/day/r1i1p1/v20120612/tasmin/tasmin_day_CanCM4_rcp45_r1i1p1_20060101-20351231.nc
+/root/directory/CCCMA/CanCM4/rcp45/day/atmos/day/r1i1p1/v20120612/tasmax/tasmax_day_CanCM4_rcp45_r1i1p1_20060101-20351231.nc
+/root/directory/CCCMA/CanCM4/historical/day/atmos/day/r1i1p1/v20120612/tasmin/tasmin_day_CanCM4_historical_r1i1p1_19610101-20051231.nc
+/root/directory/CCCMA/CanCM4/historical/day/atmos/day/r1i1p1/v20120612/tasmax/tasmax_day_CanCM4_historical_r1i1p1_19610101-20051231.nc
+/root/directory/CCCMA/CanCM4/historical/day/atmos/day/r1i1p1/v20120612/pr/pr_day_CanCM4_historical_r1i1p1_19610101-20051231.nc'''.split('\n')
+    return fl
