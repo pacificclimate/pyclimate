@@ -9,9 +9,8 @@ import argparse
 import numpy as np
 from netCDF4 import Dataset
 
-from pyclimate.cmip5 import Cmip5File, model_run_filter
+from pyclimate import Cmip5File, model_run_filter, get_model_set
 from pyclimate.nchelpers import *
-from pyclimate import get_model_set
 
 log = logging.getLogger(__name__)
 
