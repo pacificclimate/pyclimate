@@ -4,9 +4,9 @@ from collections import defaultdict
 
 class Cmip5File():
 
-    def __init__(self, fp):
+    def __init__(self, fp=None, **kwargs):
         '''
-        Parses a PCIC CMIP5 file path to extract specific metadata.
+        Parses or builds a PCIC CMIP5 file path with specific metadata.
         Pattern is "<base_dir>/<institue>/<model>/<experiment>/<frequency>/<modeling realm>/<CMOR table>/<ensemble member>/<version>/<variable name>/<CMOR filename>.nc"
                         -11       -10       -9        -8           -7            -6             -5           -4              -3           -2              -1
         CMOR filename is of pattern <variable_name>_<CMOR table>_<model>_<experiment>_<ensemble member>_<temporal subset>.nc
@@ -18,17 +18,26 @@ class Cmip5File():
         Standard Output (CMOR Tables): http://cmip-pcmdi.llnl.gov/cmip5/docs/standard_output.pdf
         '''
 
-        dirname, basename = os.path.split(os.path.abspath(fp))
-        splitdirs = dirname.split('/')
-        self.inst, self.model, self.experiment, self.freq, self.realm, self.mip, self.run, self.version, self.variable = splitdirs[-9:]
-        self.root = os.path.join(*splitdirs[:-9])
-        self.trange = basename.split('_')[-1]
+        if fp:
+            dirname, basename = os.path.split(os.path.abspath(fp))
+            splitdirs = dirname.split('/')
+            self.inst, self.model, self.experiment, self.freq, self.realm, self.mip, self.run, self.version, self.variable = splitdirs[-9:]
+            self.root = os.path.join(*splitdirs[:-9])
+            self.trange = basename.split('_')[-1]
+
+        else:
+            required_meta = ['institute', 'model', 'experiment', 'freq', 'realm', 'mip', 'run', 'version', 'variable', 'trange']
+            for att in required_meta:
+                try:
+                    setattr(self, att, kwargs[att])
+                except KeyError:
+                    raise KeyError('Required attribute {} not provided'.format(att))
 
     def __str__(self):
         return self.fullpath
 
     def __repr__(self):
-        return "{}('{}')".format(self.__class__, self.fullpath)
+        return "{}('{}')".format(self.__class__, self.__dict__)
 
     @property
     def basename(self):
@@ -58,6 +67,68 @@ class Cmip5File():
     @t_end.setter
     def t_end(self, value):
         self.trange = '-'.join(self.trange.split('-')[1], value)
+
+    @property
+    def cmip3_basename(self):
+        return '-'.join([self.model, self.experiment, self.variable, self.run])
+
+    @property
+    def cmip3_dirname(self, root=None):
+        if not root: root = self.root
+        return os.path.join('/', root, self.experiment, self.variable, self.model, self.run)
+
+    @property
+    def cmip3_fullpath(self):
+        return os.path.join(self.dirname, self.basename)
+
+
+class Cmip3File():
+
+    def __init__(self, fp=None, **kwargs):
+        '''
+        Parses or builds a PCIC CMIP3 file path with specific metadata.
+        Pattern is "<base_dir>/<experiment>/<variable name>/<model>/<ensemble member>/<filename>.nc"
+                        -6         -5            -4           -3           -2              -1
+        Filename is of pattern <model>-<experiment>-<variable name>-<ensemble memter>.nc
+                                  1         2              3                4
+        ex: root_dir/rcp45/tasmax/ACCESS1-3/r1i1p1/ACCESS1-3-rcp45-tasmax-r1i1p1.nc
+
+        Metadata requirements are found here: http://www-pcmdi.llnl.gov/ipcc/IPCC_output_requirements.htm
+        '''
+
+        if fp:
+            dirname, basename = os.path.split(os.path.abspath(fp))
+            splitdirs = dirname.split('/')
+            self.experiment, self.variable, self.model, self.run = splitdirs[-4:]
+            self.root = os.path.join(*splitdirs[:-4])
+
+        else:
+            required_meta = ['model', 'experiment', 'run', 'variable']
+            for att in required_meta:
+                try:
+                    setattr(self, att, kwargs[att])
+                except KeyError:
+                    raise KeyError('Required attribute {} not provided'.format(att))
+
+    def __str__(self):
+        return self.fullpath
+
+    def __repr__(self):
+        return "{}('{}')".format(self.__class__, self.__dict__)
+
+    @property
+    def basename(self):
+        return '-'.join([self.model, self.experiment, self.variable, self.run])
+
+    @property
+    def dirname(self, root=None):
+        if not root: root = self.root
+        return os.path.join('/', root, self.experiment, self.variable, self.model, self.run)
+
+    @property
+    def fullpath(self):
+        return os.path.join(self.dirname, self.basename)
+
 
 def model_run_filter(fpath, valid_model_runs):
     '''

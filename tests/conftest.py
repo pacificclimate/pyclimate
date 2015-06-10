@@ -90,3 +90,25 @@ def cmip5_file_list():
 /root/directory/CCCMA/CanCM4/historical/day/atmos/day/r1i1p1/v20120612/tasmax/tasmax_day_CanCM4_historical_r1i1p1_19610101-20051231.nc
 /root/directory/CCCMA/CanCM4/historical/day/atmos/day/r1i1p1/v20120612/pr/pr_day_CanCM4_historical_r1i1p1_19610101-20051231.nc'''.split('\n')
     return fl
+
+@pytest.fixture(scope='module')
+def cmip3_file_list():
+    fl = '''/root/rcp45/tasmax/CanCM4/r1i1p1/CanCM4-rcp45-tasmax-r1i1p1.nc
+/root/rcp45/tasmax/CanESM2/r1i1p1/CanESM2-rcp45-tasmax-r1i1p1.nc
+/root/rcp45/pr/CanESM2/r1i1p1/CanESM2-rcp45-pr-r1i1p1.nc
+/root/rcp45/pr/CanCM4/r1i1p1/CanCM4-rcp45-pr-r1i1p1.nc
+/root/rcp45/tasmin/CanESM2/r1i1p1/CanESM2-rcp45-tasmin-r1i1p1.nc
+/root/rcp45/tasmin/CanCM4/r1i1p1/CanCM4-rcp45-tasmin-r1i1p1.nc
+/root/rcp26/pr/CanESM2/r1i1p1/CanESM2-rcp26-pr-r1i1p1.nc
+/root/rcp26/tasmin/CanESM2/r1i1p1/CanESM2-rcp26-tasmin-r1i1p1.nc
+/root/rcp26/tasmax/CanESM2/r1i1p1/CanESM2-rcp26-tasmax-r1i1p1.nc
+/root/historical/tasmin/CanESM2/r1i1p1/CanESM2-historical-tasmin-r1i1p1.nc
+/root/historical/tasmin/CanCM4/r1i1p1/CanCM4-historical-tasmin-r1i1p1.nc
+/root/historical/tasmax/CanCM4/r1i1p1/CanCM4-historical-tasmax-r1i1p1.nc
+/root/historical/tasmax/CanESM2/r1i1p1/CanESM2-historical-tasmax-r1i1p1.nc
+/root/historical/pr/CanCM4/r1i1p1/CanCM4-historical-pr-r1i1p1.nc
+/root/historical/pr/CanESM2/r1i1p1/CanESM2-historical-pr-r1i1p1.nc
+/root/rcp85/tasmax/CanESM2/r1i1p1/CanESM2-rcp85-tasmax-r1i1p1.nc
+/root/rcp85/tasmin/CanESM2/r1i1p1/CanESM2-rcp85-tasmin-r1i1p1.nc
+/root/rcp85/pr/CanESM2/r1i1p1/CanESM2-rcp85-pr-r1i1p1.nc'''.split('\n')
+    return fl
