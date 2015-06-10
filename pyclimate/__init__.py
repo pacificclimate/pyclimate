@@ -21,23 +21,39 @@ class Cmip5File():
         if fp:
             dirname, basename = os.path.split(os.path.abspath(fp))
             splitdirs = dirname.split('/')
-            self.inst, self.model, self.experiment, self.freq, self.realm, self.mip, self.run, self.version, self.variable = splitdirs[-9:]
+            self.institute, self.model, self.experiment, self.freq, self.realm, self.mip, self.run, self.version, self.variable = splitdirs[-9:]
             self.root = os.path.join(*splitdirs[:-9])
-            self.trange = basename.split('_')[-1]
+            self.trange = os.path.splitext(basename)[0].split('_')[-1]
 
         else:
             required_meta = ['institute', 'model', 'experiment', 'freq', 'realm', 'mip', 'run', 'version', 'variable', 'trange']
             for att in required_meta:
                 try:
-                    setattr(self, att, kwargs[att])
+                    v = kwargs.pop(att)
+                    setattr(self, att, v)
                 except KeyError:
                     raise KeyError('Required attribute {} not provided'.format(att))
+            if len(kwargs) != 0:
+                for k, v in kwargs.items():
+                    setattr(self, k, v)
+
+    def __eq__(self, other):
+        return (isinstance(other, self.__class__)
+            and self.__dict__ == other.__dict__)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     def __str__(self):
         return self.fullpath
 
     def __repr__(self):
-        return "{}('{}')".format(self.__class__, self.__dict__)
+        s = "Cmip5File("
+        args = ", ".join(["{} = '{}'".format(k, v) for k, v in self.__dict__.items()])
+        # if self.root:
+        #     args += ", root = '{}'".format(self.root)
+        s += args + ")"
+        return s
 
     @property
     def basename(self):
@@ -46,7 +62,7 @@ class Cmip5File():
     @property
     def dirname(self, root=None):
         if not root: root = self.root
-        return os.path.join('/', root, self.inst, self.model, self.experiment, self.freq, self.realm, self.mip, self.run, self.version, self.variable)
+        return os.path.join('/', root, self.institute, self.model, self.experiment, self.freq, self.realm, self.mip, self.run, self.version, self.variable)
 
     @property
     def fullpath(self):
@@ -106,15 +122,31 @@ class Cmip3File():
             required_meta = ['model', 'experiment', 'run', 'variable']
             for att in required_meta:
                 try:
-                    setattr(self, att, kwargs[att])
+                    v = kwargs.pop(att)
+                    setattr(self, att, v)
                 except KeyError:
                     raise KeyError('Required attribute {} not provided'.format(att))
+            if len(kwargs) != 0:
+                for k, v in kwargs.items():
+                    setattr(self, k, v)
+
+    def __eq__(self, other):
+        return (isinstance(other, self.__class__)
+            and self.__dict__ == other.__dict__)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     def __str__(self):
         return self.fullpath
 
     def __repr__(self):
-        return "{}('{}')".format(self.__class__, self.__dict__)
+        s = "Cmip3File("
+        args = ", ".join(["{} = '{}'".format(k, v) for k, v in self.__dict__.items()])
+        # if self.root:
+        #     args += ", root = '{}'".format(self.root)
+        s += args + ")"
+        return s
 
     @property
     def basename(self):

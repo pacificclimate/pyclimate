@@ -92,6 +92,11 @@ def cmip5_file_list():
     return fl
 
 @pytest.fixture(scope='module')
+def cmip5_file():
+    fp = '/root/directory/CCCMA/CanESM2/rcp85/day/atmos/day/r1i1p1/v20120407/tasmin/tasmin_day_CanESM2_rcp85_r1i1p1_20060101-21001231.nc'
+    return fp
+
+@pytest.fixture(scope='module')
 def cmip3_file_list():
     fl = '''/root/rcp45/tasmax/CanCM4/r1i1p1/CanCM4-rcp45-tasmax-r1i1p1.nc
 /root/rcp45/tasmax/CanESM2/r1i1p1/CanESM2-rcp45-tasmax-r1i1p1.nc
@@ -112,3 +117,8 @@ def cmip3_file_list():
 /root/rcp85/tasmin/CanESM2/r1i1p1/CanESM2-rcp85-tasmin-r1i1p1.nc
 /root/rcp85/pr/CanESM2/r1i1p1/CanESM2-rcp85-pr-r1i1p1.nc'''.split('\n')
     return fl
+
+@pytest.fixture(scope='module')
+def cmip3_file():
+    fp = '/root/rcp45/tasmax/CanCM4/r1i1p1/CanCM4-rcp45-tasmax-r1i1p1.nc'
+    return fp
