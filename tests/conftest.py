@@ -6,10 +6,8 @@ from tempfile import NamedTemporaryFile
 import netCDF4
 import numpy as np
 
-@pytest.fixture(scope="session")
-def nc_3d(request):
+def get_base_3d_nc(dims, calendar='standard'):
     f = NamedTemporaryFile(suffix='.nc')
-    dims = {'time': 32, 'lon': 128, 'lat': 64}
     nc = netCDF4.Dataset(f.name, 'w')
     nc.model_id = 'test'
     nc.source = 'random data'
@@ -35,8 +33,8 @@ def nc_3d(request):
     var_time[:] = range(dims['time'])
 
     var_time.axis = 'T'
-    var_time.unit = 'days since 1850-1-1'
-    var_time.calendar = '365_day'
+    var_time.units = 'days since 2000-01-01'
+    var_time.calendar = calendar
     var_time.long_name = 'time'
 
     var = nc.createVariable('tasmax', 'f4', ('time', 'lat', 'lon'), fill_value=1e20)
@@ -47,9 +45,14 @@ def nc_3d(request):
     for t in range(dims['time']):
         var[t,:,:] = np.random.randn(dims['lat'], dims['lon'])
 
+    return nc
+
+@pytest.fixture(scope="session")
+def nc_3d(request):
+    nc = get_base_3d_nc({'time': 32, 'lon': 128, 'lat': 64})
+
     def teardown():
         nc.close()
-        f.close()
     request.addfinalizer(teardown)
 
     return nc
@@ -122,3 +125,23 @@ def cmip3_file_list():
 def cmip3_file():
     fp = '/root/rcp45/tasmax/CanCM4/r1i1p1/CanCM4-rcp45-tasmax-r1i1p1.nc'
     return fp
+
+@pytest.fixture(scope="session")
+def nc_3d_360day(request):
+    nc = get_base_3d_nc({'time': 360, 'lon': 2, 'lat': 2}, calendar='360_day')
+
+    def teardown():
+        nc.close()
+    request.addfinalizer(teardown)
+
+    return nc
+
+@pytest.fixture(scope="session")
+def nc_3d_365day(request):
+    nc = get_base_3d_nc({'time': 360, 'lon': 2, 'lat': 2}, calendar='365_day')
+
+    def teardown():
+        nc.close()
+    request.addfinalizer(teardown)
+
+    return nc

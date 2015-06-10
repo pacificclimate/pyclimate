@@ -1,6 +1,36 @@
 import logging
 
+from netCDF4 import num2date
+
 log = logging.getLogger(__name__)
+
+def get_monthly_time_slices(ncvar_time):
+    '''
+    Based on an input NetCDF4 time variable returns calendar appropriate monthly slices
+    '''
+    assert 'calendar' in ncvar_time.ncattrs(), "Time variable does not have a defined calendar"
+    cal = ncvar_time.calendar
+
+    assert 'units' in ncvar_time.ncattrs(), "Time variable must have 'unit' attribute"
+    units = ncvar_time.units
+
+    assert len(ncvar_time.dimensions) == 1, "Time varaible must be single dimension"
+
+    slices = []
+
+    d_start = num2date(0, units, cal)
+    current_month = d_start.month
+    t_start = 0
+    for i in ncvar_time[:]:
+        d = num2date(i, units, cal)
+        if d.month != current_month:
+            slices.append(slice(t_start, i))
+            t_start = i
+            current_month = d.month
+    slices.append(slice(t_start, i+1))
+
+    return slices
+
 
 def nc_copy_atts(dsin, dsout, varin=False, varout=False):
     '''
