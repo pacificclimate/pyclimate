@@ -138,10 +138,44 @@ def nc_3d_360day(request):
 
 @pytest.fixture(scope="session")
 def nc_3d_365day(request):
-    nc = get_base_3d_nc({'time': 360, 'lon': 2, 'lat': 2}, calendar='365_day')
+    nc = get_base_3d_nc({'time': 365, 'lon': 2, 'lat': 2}, calendar='365_day')
 
     def teardown():
         nc.close()
     request.addfinalizer(teardown)
 
     return nc
+
+@pytest.fixture(scope="session")
+def nc_3d_standard(request):
+    nc = get_base_3d_nc({'time': 366, 'lon': 2, 'lat': 2}, calendar='standard')
+
+    def teardown():
+        nc.close()
+    request.addfinalizer(teardown)
+
+    return nc
+
+@pytest.fixture(scope="session")
+def dpm_365(request):
+    return [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+
+@pytest.fixture(scope="session")
+def days_365(request):
+    return [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365]
+
+@pytest.fixture(scope="session")
+def dpm_360(request):
+    return [30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30]
+
+@pytest.fixture(scope="session")
+def days_360(request):
+    return [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360]
+
+@pytest.fixture(scope="session")
+def dpm_leap(request):
+    return [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+
+@pytest.fixture(scope="session")
+def days_leap(request):
+    return [0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366]
