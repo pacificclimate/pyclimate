@@ -57,7 +57,7 @@ def nc_3d(request):
 
     return nc
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def nc_3d_bare(request):
     f = NamedTemporaryFile()
     dims = {'time': 32, 'lon': 128, 'lat': 64}
@@ -65,7 +65,6 @@ def nc_3d_bare(request):
     lat = nc.createDimension('lat', dims['lat'])
     lon = nc.createDimension('lon', dims['lon'])
     time = nc.createDimension('time', dims['time'])
-    some_var = nc.createVariable('dummy_var','f4',('time', 'lat', 'lon'))
 
     def teardown():
         nc.close()
