@@ -30,3 +30,8 @@ def test_nc_get_standard_monthly_time_slices(nc_3d_standard, days_leap):
 
     slices = nch.get_monthly_time_slices(nc_3d_standard.variables['time'])
     assert slices == expected
+
+def test_nc_get_monthly_time_slices_nonzero_time_start(nc_3d_360day_tstart_15):
+    expected = [slice(0, 15)] + [slice(i, i+30) for i in range(15, 345, 30)] + [slice(345, 360)]
+    slices = nch.get_monthly_time_slices(nc_3d_360day_tstart_15.variables['time'])
+    assert slices  == expected

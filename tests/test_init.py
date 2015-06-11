@@ -30,6 +30,5 @@ def test_cmip3file(cmip3_file_list):
 
 def test_model_set_filter(cmip5_file_list):
     ms = get_model_set('pcic12')
-    print(cmip5_file_list)
     file_list = [x for x in cmip5_file_list if model_run_filter(x, ms)]
     assert len(file_list) == 10

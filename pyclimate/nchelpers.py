@@ -18,11 +18,11 @@ def get_monthly_time_slices(ncvar_time):
 
     slices = []
 
-    d_start = num2date(0, units, cal)
+    d_start = num2date(ncvar_time[0], units, cal)
     current_month = d_start.month
     t_start = 0
-    for i in ncvar_time[:]:
-        d = num2date(i, units, cal)
+    for i, val in enumerate(ncvar_time):
+        d = num2date(val, units, cal)
         if d.month != current_month:
             slices.append(slice(t_start, i))
             t_start = i

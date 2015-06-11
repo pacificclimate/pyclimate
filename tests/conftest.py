@@ -6,7 +6,7 @@ from tempfile import NamedTemporaryFile
 import netCDF4
 import numpy as np
 
-def get_base_3d_nc(dims, calendar='standard'):
+def get_base_3d_nc(dims, calendar='standard', start_time = 0):
     f = NamedTemporaryFile(suffix='.nc')
     nc = netCDF4.Dataset(f.name, 'w')
     nc.model_id = 'test'
@@ -30,7 +30,7 @@ def get_base_3d_nc(dims, calendar='standard'):
 
     time = nc.createDimension('time', dims['time'])
     var_time = nc.createVariable('time', 'i4', 'time')
-    var_time[:] = range(dims['time'])
+    var_time[:] = range(start_time, start_time + dims['time'])
 
     var_time.axis = 'T'
     var_time.units = 'days since 2000-01-01'
@@ -69,7 +69,6 @@ def nc_3d_bare(request):
 
     def teardown():
         nc.close()
-        os.remove(f.name)
     request.addfinalizer(teardown)
 
     return nc
@@ -155,6 +154,17 @@ def nc_3d_standard(request):
     request.addfinalizer(teardown)
 
     return nc
+
+@pytest.fixture(scope="session")
+def nc_3d_360day_tstart_15(request):
+    nc = get_base_3d_nc({'time': 360, 'lon': 2, 'lat': 2}, calendar='360_day', start_time=15)
+
+    def teardown():
+        nc.close()
+    request.addfinalizer(teardown)
+
+    return nc
+
 
 @pytest.fixture(scope="session")
 def dpm_365(request):
