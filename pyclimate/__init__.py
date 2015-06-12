@@ -57,7 +57,7 @@ class Cmip5File():
 
     @property
     def basename(self):
-        return '_'.join([self.variable, self.mip, self.model, self.experiment, self.run, self.trange])
+        return '_'.join([self.variable, self.mip, self.model, self.experiment, self.run, self.trange]) + '.nc'
 
     @property
     def dirname(self, root=None):
@@ -86,7 +86,7 @@ class Cmip5File():
 
     @property
     def cmip3_basename(self):
-        return '-'.join([self.model, self.experiment, self.variable, self.run])
+        return '-'.join([self.model, self.experiment, self.variable, self.run]) + '.nc'
 
     @property
     def cmip3_dirname(self, root=None):
@@ -150,7 +150,7 @@ class Cmip3File():
 
     @property
     def basename(self):
-        return '-'.join([self.model, self.experiment, self.variable, self.run])
+        return '-'.join([self.model, self.experiment, self.variable, self.run]) + '.nc'
 
     @property
     def dirname(self, root=None):
