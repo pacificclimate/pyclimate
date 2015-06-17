@@ -21,85 +21,115 @@ def get_recursive_file_list(base_dir, pattern):
             matches.append(os.path.join(root, filename))
     return matches
 
+def setup_tas(nc_source, d, outdir):
+
+    tas = Cmip5File(**d)
+    tas.variable = 'tas'
+    tas.root = outdir
+    if not os.path.exists(tas.dirname):
+        os.makedirs(tas.dirname)
+
+    nc = Dataset(tas.fullpath, 'w')
+    ncvar = nc_copy_var(nc_source, nc, 'tasmax', 'tas', copy_attrs=True, copy_data=False)
+    nc_copy_atts(nc_source, nc) #copy global atts
+    ncvar.long_name = 'Near-Surface Air Temperature'
+    ncvar.standard_name = 'air_temperature'
+    ncvar.units = 'K'
+    ncvar.cell_methods = 'time: mean'
+    ncvar.cell_measures = 'area: areacella'
+
+    return nc
+
+def setup_gdd(nc_source, d, outdir):
+
+    gdd = Cmip5File(**d)
+    gdd.variable = 'gdd'
+    gdd.root = outdir
+    if not os.path.exists(gdd.dirname):
+        os.makedirs(gdd.dirname)
+
+    nc = Dataset(gdd.fullpath, 'w')
+    ncvar = nc_copy_var(nc_source, nc, 'tasmax', 'gdd', copy_data=False)
+    nc_copy_atts(nc_source, nc) #copy global atts
+    ncvar.units = 'degree days'
+    ncvar.long_name = 'Growing Degree Days'
+
+    return nc
+
+def setup_hdd(nc_source, d, outdir):
+
+    hdd = Cmip5File(**d)
+    hdd.variable = 'hdd'
+    hdd.root = outdir
+    if not os.path.exists(hdd.dirname):
+        os.makedirs(hdd.dirname)
+
+    nc = Dataset(hdd.fullpath, 'w')
+    ncvar = nc_copy_var(nc_source, nc, 'tasmax', 'hdd', copy_data=False)
+    nc_copy_atts(nc_source, nc) #copy global atts
+    ncvar.units = 'degree days'
+    ncvar.long_name = 'Heating Degree Days'
+
+    return nc
+
+def setup_ffd(nc_source, d, outdir):
+
+    ffd = Cmip5File(**d)
+    ffd.variable = 'ffd'
+    ffd.root = outdir
+    if not os.path.exists(ffd.dirname):
+        os.makedirs(ffd.dirname)
+
+    nc = Dataset(ffd.fullpath, 'w')
+    ncvar = nc_copy_var(nc_source, nc, 'tasmax', 'ffd', copy_data=False)
+    nc_copy_atts(nc_source, nc) #copy global atts
+    ncvar.units = 'days'
+    ncvar.long_name = 'Frost Free Days'
+
+    return nc
+
+
+def setup_pas(nc_source, d, outdir):
+
+    pas = Cmip5File(**d)
+    pas.variable = 'pas'
+    pas.root = outdir
+    if not os.path.exists(pas.dirname):
+        os.makedirs(pas.dirname)
+
+    nc = Dataset(pas.fullpath, 'w')
+    ncvar = nc_copy_var(nc_source, nc, 'pr', 'pas', copy_data=False)
+    nc_copy_atts(nc_source, nc) #copy global atts
+    ncvar.units = 'days'
+    ncvar.long_name = 'Frost Free Days'
+
+    return nc
+
 def calc_tas(var_set, outdir):
     nc_tasmax = Dataset(var_set['tasmax'].fullpath)
     nc_tasmin = Dataset(var_set['tasmin'].fullpath)
     nc_pr = Dataset(var_set['pr'].fullpath)
-    
+
     var_tasmax = nc_tasmax.variables['tasmax']
     var_tasmin = nc_tasmin.variables['tasmin']
     var_pr = nc_pr.variables['pr']
     assert var_tasmax.shape == var_tasmin.shape
 
     # Set up tas
-    tas = Cmip5File((var_set['tasmax'].fullpath))
-    tas.variable = 'tas'
-    tas.root = outdir
-    if not os.path.exists(tas.dirname):
-        os.makedirs(tas.dirname)
-
-    tas.nc = Dataset(tas.fullpath, 'w')
-    tas.ncvar = nc_copy_var(nc_tasmax, tas.nc, 'tasmax', 'tas', copy_data=False)
-    nc_copy_atts(nc_tasmax, tas.nc) #copy global atts
-    tas.ncvar.long_name = 'Near-Surface Air Temperature'
-    tas.ncvar.standard_name = 'air_temperature'
-    tas.ncvar.units = 'K'
-    tas.ncvar.cell_methods = 'time: mean'
-    tas.ncvar.cell_measures = 'area: areacella'
-    tas.missing_value = 1e20
-    tas._FillValue = 1e20
+    nc_tas = setup_tas(nc_tasmax, var_set['tasmax'].__dict__, outdir)
 
     # Set up gdd
-    gdd = Cmip5File((var_set['tasmax'].fullpath))
-    gdd.variable = 'gdd'
-    gdd.root = outdir
-    if not os.path.exists(gdd.dirname):
-        os.makedirs(gdd.dirname)
-
-    gdd.nc = Dataset(gdd.fullpath, 'w')
-    gdd.ncvar = nc_copy_var(nc_tasmax, gdd.nc, 'tasmax', 'gdd', copy_data=False)
-    nc_copy_atts(nc_tasmax, gdd.nc) #copy global atts
-    gdd.ncvar.units = 'degree days'
-    gdd.ncvar.long_name = 'Growing Degree Days'
+    nc_gdd = setup_gdd(nc_tasmax, var_set['tasmax'].__dict__, outdir)
 
     # Set up hdd
-    hdd = Cmip5File((var_set['tasmax'].fullpath))
-    hdd.variable = 'hdd'
-    hdd.root = outdir
-    if not os.path.exists(hdd.dirname):
-        os.makedirs(hdd.dirname)
-
-    hdd.nc = Dataset(hdd.fullpath, 'w')
-    hdd.ncvar = nc_copy_var(nc_tasmax, hdd.nc, 'tasmax', 'hdd', copy_data=False)
-    nc_copy_atts(nc_tasmax, hdd.nc) #copy global atts
-    hdd.ncvar.units = 'degree days'
-    hdd.ncvar.long_name = 'Heating Degree Days'
+    nc_hdd = setup_hdd(nc_tasmax, var_set['tasmax'].__dict__, outdir)
 
     # Set up ffd
-    ffd = Cmip5File((var_set['tasmax'].fullpath))
-    ffd.variable = 'ffd'
-    ffd.root = outdir
-    if not os.path.exists(ffd.dirname):
-        os.makedirs(ffd.dirname)
-
-    ffd.nc = Dataset(ffd.fullpath, 'w')
-    ffd.ncvar = nc_copy_var(nc_tasmax, ffd.nc, 'tasmax', 'ffd', copy_data=False)
-    nc_copy_atts(nc_tasmax, ffd.nc) #copy global atts
-    ffd.ncvar.units = 'days'
-    ffd.ncvar.long_name = 'Frost Free Days'
+    nc_ffd = setup_ffd(nc_tasmax, var_set['tasmax'].__dict__, outdir)
 
     # Set up pas
-    pas = Cmip5File((var_set['tasmax'].fullpath))
-    pas.variable = 'pas'
-    pas.root = outdir
-    if not os.path.exists(pas.dirname):
-        os.makedirs(pas.dirname)
+    nc_pas = setup_pas(nc_pr, var_set['tasmax'].__dict__, outdir)
 
-    pas.nc = Dataset(pas.fullpath, 'w')
-    pas.ncvar = nc_copy_var(nc_pr, pas.nc, 'pr', 'pas', copy_data=False)
-    nc_copy_atts(nc_pr, pas.nc) #copy global atts
-    pas.ncvar.units = 'days'
-    pas.ncvar.long_name = 'Frost Free Days'
 
     count = float(var_tasmax.shape[0])
     for i in range(var_tasmax.shape[0]):
