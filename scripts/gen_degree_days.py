@@ -38,7 +38,7 @@ def setup_tas(nc_source, d, outdir):
     ncvar.cell_methods = 'time: mean'
     ncvar.cell_measures = 'area: areacella'
 
-    return nc
+    return nc, ncvar
 
 def setup_gdd(nc_source, d, outdir):
 
@@ -54,7 +54,7 @@ def setup_gdd(nc_source, d, outdir):
     ncvar.units = 'degree days'
     ncvar.long_name = 'Growing Degree Days'
 
-    return nc
+    return nc, ncvar
 
 def setup_hdd(nc_source, d, outdir):
 
@@ -70,7 +70,7 @@ def setup_hdd(nc_source, d, outdir):
     ncvar.units = 'degree days'
     ncvar.long_name = 'Heating Degree Days'
 
-    return nc
+    return nc, ncvar
 
 def setup_ffd(nc_source, d, outdir):
 
@@ -86,8 +86,7 @@ def setup_ffd(nc_source, d, outdir):
     ncvar.units = 'days'
     ncvar.long_name = 'Frost Free Days'
 
-    return nc
-
+    return nc, ncvar
 
 def setup_pas(nc_source, d, outdir):
 
@@ -103,9 +102,16 @@ def setup_pas(nc_source, d, outdir):
     ncvar.units = 'days'
     ncvar.long_name = 'Frost Free Days'
 
-    return nc
+    return nc, ncvar
 
-def calc_tas(var_set, outdir):
+def derive(var_set, outdir, variables):
+
+    do_tas = 'tas' in variables
+    do_gdd = 'gdd' in variables
+    do_hdd = 'hdd' in variables
+    do_ffd = 'ffd' in variables
+    do_pas = 'pas' in variables
+
     nc_tasmax = Dataset(var_set['tasmax'].fullpath)
     nc_tasmin = Dataset(var_set['tasmin'].fullpath)
     nc_pr = Dataset(var_set['pr'].fullpath)
@@ -115,30 +121,43 @@ def calc_tas(var_set, outdir):
     var_pr = nc_pr.variables['pr']
     assert var_tasmax.shape == var_tasmin.shape
 
-    # Set up tas
-    nc_tas = setup_tas(nc_tasmax, var_set['tasmax'].__dict__, outdir)
+    if do_tas:
+        nc_tas, ncvar_tas = setup_tas(nc_tasmax, var_set['tasmax'].__dict__, outdir)
 
-    # Set up gdd
-    nc_gdd = setup_gdd(nc_tasmax, var_set['tasmax'].__dict__, outdir)
+    if do_gdd:
+        nc_gdd, ncvar_gdd = setup_gdd(nc_tasmax, var_set['tasmax'].__dict__, outdir)
 
-    # Set up hdd
-    nc_hdd = setup_hdd(nc_tasmax, var_set['tasmax'].__dict__, outdir)
+    if do_hdd:
+        nc_hdd, ncvar_hdd = setup_hdd(nc_tasmax, var_set['tasmax'].__dict__, outdir)
 
-    # Set up ffd
-    nc_ffd = setup_ffd(nc_tasmax, var_set['tasmax'].__dict__, outdir)
+    if do_ffd:
+        nc_ffd, ncvar_ffd = setup_ffd(nc_tasmax, var_set['tasmax'].__dict__, outdir)
 
-    # Set up pas
-    nc_pas = setup_pas(nc_pr, var_set['tasmax'].__dict__, outdir)
-
+    if do_pas:
+        nc_pas, ncvar_pas = setup_pas(nc_pr, var_set['tasmax'].__dict__, outdir)
 
     count = float(var_tasmax.shape[0])
     for i in range(var_tasmax.shape[0]):
         sys.stdout.write("\r{:.2%}".format(i/count))
-        tas.ncvar[i,:,:] = (var_tasmax[i,:,:] + var_tasmin[i,:,:]) / 2
-        gdd.ncvar[i,:,:] = np.where(tas.ncvar[i,:,:] > 278.15, (tas.ncvar[i,:,:] - 278.15), 0)
-        hdd.ncvar[i,:,:] = np.where(tas.ncvar[i,:,:] < 291.15, np.absolute(tas.ncvar[i,:,:] - 291.15), 0)
-        ffd.ncvar[i,:,:] = np.where(var_tasmin[i,:,:] > 273.15, 1, 0)
-        pas.ncvar[i,:,:] = np.where(var_tasmax[i,:,:] < 273.15, var_pr[i,:,:] , 0)
+
+        if do_tas:
+            ncvar_tas[i,:,:] = (var_tasmax[i,:,:] + var_tasmin[i,:,:]) / 2
+        if do_gdd:
+            if do_tas:
+                ncvar_gdd[i,:,:] = np.where(ncvar_tas[i,:,:] > 278.15, (ncvar_tas[i,:,:] - 278.15), 0)
+            else:
+                tas = (var_tasmax[i,:,:] + var_tasmin[i,:,:]) / 2
+                ncvar_gdd[i,:,:] = np.where(tas > 278.15, (tas - 278.15), 0)
+        if do_hdd:
+            if do_tas:
+                ncvar_hdd[i,:,:] = np.where(ncvar_tas[i,:,:] < 291.15, np.absolute(ncvar_tas[i,:,:] - 291.15), 0)
+            else:
+                tas = (var_tasmax[i,:,:] + var_tasmin[i,:,:]) / 2
+                ncvar_hdd[i,:,:] = np.where(tas < 291.15, np.absolute(tas - 291.15), 0)
+        if do_ffd:
+            ncvar_ffd[i,:,:] = np.where(var_tasmin[i,:,:] > 273.15, 1, 0)
+        if do_pas:
+            ncvar_pas[i,:,:] = np.where(var_tasmax[i,:,:] < 273.15, var_pr[i,:,:] , 0)
 
 def main(args):
     base_dir = args.indir
@@ -166,14 +185,16 @@ def main(args):
 
     for i in range(len(model_sets)):
         log.info("[{}/{}]".format(i, len(model_sets)))
-        model_sets['tas'] = calc_tas(model_sets[i], args.outdir)
+        derive(model_sets[i], args.outdir, args.variable)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('indir', help='Input directory')
     parser.add_argument('outdir', help='Output directory')
-    parser.add_argument('-v', '--variable', nargs= '+',  help='Variable(s) to calculate. Ex: -v var1 var2 var3')
+    parser.add_argument('-v', '--variable', nargs= '+',
+                        choices=['tas', 'gdd', 'hdd', 'ffd', 'pas'],
+                        help='Variable(s) to calculate. Ex: -v var1 var2 var3')
     parser.add_argument('-m', '--model_filter', help='Predefined model set to restrict file input to')
     parser.add_argument('--progress', default=False, action='store_true', help='Display percentage progress')
     args = parser.parse_args()
