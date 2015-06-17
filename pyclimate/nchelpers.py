@@ -74,7 +74,7 @@ def nc_copy_var(dsin, dsout, varin, varout, copy_data=False, copy_attrs=False):
         return
 
     ncvarin = dsin.variables[varin]
-    fv = ncvarin._FillValue if ncvarin._FillValue else None
+    fv = ncvarin._FillValue if hasattr(ncvarin, '_FillValue') else None
     ncvarout = dsout.createVariable(varout, ncvarin.datatype, ncvarin.dimensions, fill_value = fv)
 
     if 'bounds' in ncvarin.ncattrs():
