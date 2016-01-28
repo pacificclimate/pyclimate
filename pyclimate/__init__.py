@@ -180,11 +180,21 @@ def model_run_filter(fpath, valid_model_runs):
 
 from pyclimate.filters import Filter
 
-def find_cmip5_model_sets(base_dir, _filter=None):
+def iter_matching_cmip5_file(base_dir, _filter=None):
 
     # Instantiate filter if supplied
     _filter = Filter(_filter)
 
-    files = [fp for fp in list_netcdf_files(base_dir) if fp in _filter]
+    for fp in list_netcdf_files(base_dir):
+        if fp in _filter:
+            yield fp
 
-    return files
+from collections import defaultdict
+
+def group_files_by_model_set(file_iter):
+    model_sets = defaultdict(dict)
+    for fp in file_iter:
+        cf = Cmip5File(fp)
+        model_sets['{}_{}_{}'.format(cf.model, cf.experiment, cf.run)][cf.variable] = fp
+
+    return model_sets

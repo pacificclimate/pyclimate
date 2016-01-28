@@ -8,7 +8,7 @@ import argparse
 import numpy as np
 from netCDF4 import Dataset
 
-from pyclimate import Cmip5File, model_run_filter, find_cmip5_model_sets
+from pyclimate import Cmip5File, model_run_filter, iter_matching_cmip5_file
 from pyclimate.nchelpers import *
 
 log = logging.getLogger(__name__)
@@ -155,30 +155,15 @@ def derive(var_set, outdir, variables):
 def main(args):
     base_dir = args.indir
     log.info('Getting file list')
-    f_list = find_cmip5_model_sets(base_dir, args.filter)
-
-    log.info(len(f_list))
-    log.info('\n'.join(f_list))
-
-    exit()
+    file_iter = iter_matching_cmip5_file(base_dir, args.filter)
 
     log.info('Determining valid model sets')
-    tasmax_files = [x for x in file_list if 'tasmax' in x]
-    tasmin_files = [x.replace('tasmax', 'tasmin') for x in tasmax_files]
-    tasmin_files_available = [x in file_list for x in tasmin_files]
-    pr_files = [x.replace('tasmax', 'pr') for x in tasmax_files]
-    pr_files_available = [x in file_list for x in pr_files]
-    files_available = [all((x, y)) for x, y in zip(tasmin_files_available, pr_files_available)]
-
-    log.info(files_available)
-    log.info('Found {} tasmax, tasmin, pr model sets'.format(sum(files_available)))
-
-
-    model_sets = [{'tasmax': Cmip5File(tasmax), 'tasmin': Cmip5File(tasmin), 'pr': Cmip5File(pr)} for tasmax, tasmin, pr, file_available in zip(tasmax_files, tasmin_files, pr_files, files_available) if file_available]
-
+    model_sets = group_files_by_model_set(file_iter)
+            
     log.info(model_sets)
 
     exit()
+        
     for i in range(len(model_sets)):
         log.info("[{}/{}]".format(i, len(model_sets)))
         derive(model_sets[i], args.outdir, args.variable)
