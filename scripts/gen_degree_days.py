@@ -158,6 +158,7 @@ def main(args):
     f_list = find_cmip5_model_sets(base_dir, args.filter)
 
     log.info(len(f_list))
+    log.info('\n'.join(f_list))
 
     exit()
 

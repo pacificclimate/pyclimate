@@ -48,9 +48,8 @@ class Filter(object):
 
         cf = Cmip5File(fp)
         for entry in self.filter:
-            for att, val in entry.items():
-                if hasattr(cf, att) and (getattr(cf, att) == val or getattr(cf, att) in val):
-                    return True
+            if all([(hasattr(cf, att) and (getattr(cf, att) == val or getattr(cf, att) in val)) for att, val in entry.items()]):
+                return True
 
         return False
 
