@@ -2,24 +2,17 @@
 
 import os
 import sys
-import fnmatch
 import logging
 import argparse
 
 import numpy as np
 from netCDF4 import Dataset
 
-from pyclimate import Cmip5File, model_run_filter, get_model_set
+from pyclimate import Cmip5File, model_run_filter, find_cmip5_model_sets
 from pyclimate.nchelpers import *
 
 log = logging.getLogger(__name__)
 
-def get_recursive_file_list(base_dir, pattern):
-    matches = []
-    for root, dirnames, filenames in os.walk(base_dir):
-        for filename in fnmatch.filter(filenames, pattern):
-            matches.append(os.path.join(root, filename))
-    return matches
 
 def setup_tas(nc_source, d, outdir):
 
@@ -162,14 +155,11 @@ def derive(var_set, outdir, variables):
 def main(args):
     base_dir = args.indir
     log.info('Getting file list')
-    file_list = get_recursive_file_list(base_dir, '*.nc')
-    log.info('Found {} netcdf files'.format(len(file_list)))
+    f_list = find_cmip5_model_sets(base_dir, args.filter)
 
-    if args.model_filter:
-        log.info('Filtering to requested set')
-        _filter = get_model_set(args.model_filter)
-        file_list = [x for x in file_list if model_run_filter(x, _filter)]
-        log.info('{} resulting files'.format(len(file_list)))
+    log.info(len(f_list))
+
+    exit()
 
     log.info('Determining valid model sets')
     tasmax_files = [x for x in file_list if 'tasmax' in x]
@@ -179,10 +169,15 @@ def main(args):
     pr_files_available = [x in file_list for x in pr_files]
     files_available = [all((x, y)) for x, y in zip(tasmin_files_available, pr_files_available)]
 
-    log.info('Found {} tasmax, tasmin, pr model sets'.format(len(files_available)))
+    log.info(files_available)
+    log.info('Found {} tasmax, tasmin, pr model sets'.format(sum(files_available)))
+
 
     model_sets = [{'tasmax': Cmip5File(tasmax), 'tasmin': Cmip5File(tasmin), 'pr': Cmip5File(pr)} for tasmax, tasmin, pr, file_available in zip(tasmax_files, tasmin_files, pr_files, files_available) if file_available]
 
+    log.info(model_sets)
+
+    exit()
     for i in range(len(model_sets)):
         log.info("[{}/{}]".format(i, len(model_sets)))
         derive(model_sets[i], args.outdir, args.variable)
@@ -195,7 +190,7 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--variable', nargs= '+',
                         choices=['tas', 'gdd', 'hdd', 'ffd', 'pas'],
                         help='Variable(s) to calculate. Ex: -v var1 var2 var3')
-    parser.add_argument('-m', '--model_filter', help='Predefined model set to restrict file input to')
+    parser.add_argument('-f', '--filter', help='Predefined model set to restrict file input to')
     parser.add_argument('--progress', default=False, action='store_true', help='Display percentage progress')
     args = parser.parse_args()
 
