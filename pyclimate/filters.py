@@ -39,6 +39,8 @@ class Filter(object):
     def __init__(self, _filter=None):
         if _filter == 'pcic12':
             self.filter = pcic12
+        else:
+            self.filter = _filter
 
     def __contains__(self, fp):
         '''

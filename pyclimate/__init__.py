@@ -163,7 +163,7 @@ class Cmip3File():
         return os.path.join(self.dirname, self.basename)
 
 
-def list_netcdf_files(base_dir, pattern="*.nc"):
+def iter_netcdf_files(base_dir, pattern="*.nc"):
     for root, dirnames, filenames in os.walk(base_dir):
         for filename in fnmatch.filter(filenames, pattern):
             yield os.path.join(root, filename)
@@ -180,12 +180,12 @@ def model_run_filter(fpath, valid_model_runs):
 
 from pyclimate.filters import Filter
 
-def iter_matching_cmip5_file(base_dir, _filter=None):
+def iter_matching_cmip5_file(file_iter, _filter=None):
 
-    # Instantiate filter if supplied
+    # Instantiate filter
     _filter = Filter(_filter)
 
-    for fp in list_netcdf_files(base_dir):
+    for fp in file_iter:
         if fp in _filter:
             yield fp
 

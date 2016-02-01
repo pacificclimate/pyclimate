@@ -8,7 +8,7 @@ import argparse
 import numpy as np
 from netCDF4 import Dataset
 
-from pyclimate import Cmip5File, model_run_filter, iter_matching_cmip5_file
+from pyclimate import Cmip5File, iter_netcdf_files, group_files_by_model_set, iter_matching_cmip5_file
 from pyclimate.nchelpers import *
 
 log = logging.getLogger(__name__)
@@ -155,7 +155,8 @@ def derive(var_set, outdir, variables):
 def main(args):
     base_dir = args.indir
     log.info('Getting file list')
-    file_iter = iter_matching_cmip5_file(base_dir, args.filter)
+    netcdf_iter = iter_netcdf_files(base_dir, args.filter)
+    file_iter = iter_matching_cmip5_file(netcdf_iter, args.filter)
 
     log.info('Determining valid model sets')
     model_sets = group_files_by_model_set(file_iter)
