@@ -6,10 +6,10 @@ from netCDF4 import Dataset
 from pyclimate import Cmip5File
 
 class DerivableBase(object):
-    required_atts = ['model', 'experiment', 'run', 't_start', 't_end']
+    required_atts = ['model', 'experiment', 'run', 'trange']
 
     def __init__(self, **kwargs):
-        for att in required_meta:
+        for att in self.required_atts:
             try:
                 v = kwargs.pop(att)
                 setattr(self, att, v)
