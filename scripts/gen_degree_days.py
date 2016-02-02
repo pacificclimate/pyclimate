@@ -13,90 +13,6 @@ from pyclimate.nchelpers import *
 
 log = logging.getLogger(__name__)
 
-
-def setup_tas(nc_source, d, outdir):
-
-    tas = Cmip5File(**d)
-    tas.variable = 'tas'
-    tas.root = outdir
-    if not os.path.exists(tas.dirname):
-        os.makedirs(tas.dirname)
-
-    nc = Dataset(tas.fullpath, 'w')
-    ncvar = nc_copy_var(nc_source, nc, 'tasmax', 'tas', copy_attrs=True, copy_data=False)
-    nc_copy_atts(nc_source, nc) #copy global atts
-    ncvar.long_name = 'Near-Surface Air Temperature'
-    ncvar.standard_name = 'air_temperature'
-    ncvar.units = 'K'
-    ncvar.cell_methods = 'time: mean'
-    ncvar.cell_measures = 'area: areacella'
-
-    return nc, ncvar
-
-def setup_gdd(nc_source, d, outdir):
-
-    gdd = Cmip5File(**d)
-    gdd.variable = 'gdd'
-    gdd.root = outdir
-    if not os.path.exists(gdd.dirname):
-        os.makedirs(gdd.dirname)
-
-    nc = Dataset(gdd.fullpath, 'w')
-    ncvar = nc_copy_var(nc_source, nc, 'tasmax', 'gdd', copy_data=False)
-    nc_copy_atts(nc_source, nc) #copy global atts
-    ncvar.units = 'degree days'
-    ncvar.long_name = 'Growing Degree Days'
-
-    return nc, ncvar
-
-def setup_hdd(nc_source, d, outdir):
-
-    hdd = Cmip5File(**d)
-    hdd.variable = 'hdd'
-    hdd.root = outdir
-    if not os.path.exists(hdd.dirname):
-        os.makedirs(hdd.dirname)
-
-    nc = Dataset(hdd.fullpath, 'w')
-    ncvar = nc_copy_var(nc_source, nc, 'tasmax', 'hdd', copy_data=False)
-    nc_copy_atts(nc_source, nc) #copy global atts
-    ncvar.units = 'degree days'
-    ncvar.long_name = 'Heating Degree Days'
-
-    return nc, ncvar
-
-def setup_ffd(nc_source, d, outdir):
-
-    ffd = Cmip5File(**d)
-    ffd.variable = 'ffd'
-    ffd.root = outdir
-    if not os.path.exists(ffd.dirname):
-        os.makedirs(ffd.dirname)
-
-    nc = Dataset(ffd.fullpath, 'w')
-    ncvar = nc_copy_var(nc_source, nc, 'tasmax', 'ffd', copy_data=False)
-    nc_copy_atts(nc_source, nc) #copy global atts
-    ncvar.units = 'days'
-    ncvar.long_name = 'Frost Free Days'
-
-    return nc, ncvar
-
-def setup_pas(nc_source, d, outdir):
-
-    pas = Cmip5File(**d)
-    pas.variable = 'pas'
-    pas.root = outdir
-    if not os.path.exists(pas.dirname):
-        os.makedirs(pas.dirname)
-
-    nc = Dataset(pas.fullpath, 'w')
-    ncvar = nc_copy_var(nc_source, nc, 'pr', 'pas', copy_data=False)
-    nc_copy_atts(nc_source, nc) #copy global atts
-    ncvar.units = 'days'
-    ncvar.long_name = 'Frost Free Days'
-
-    return nc, ncvar
-
 def derive(var_set, outdir, variables):
 
     do_tas = 'tas' in variables
@@ -160,11 +76,11 @@ def main(args):
 
     log.info('Determining valid model sets')
     model_sets = group_files_by_model_set(file_iter)
-            
+
     log.info(model_sets)
 
     exit()
-        
+
     for i in range(len(model_sets)):
         log.info("[{}/{}]".format(i, len(model_sets)))
         derive(model_sets[i], args.outdir, args.variable)
