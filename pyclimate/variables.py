@@ -77,10 +77,11 @@ class tas(DerivedVariable):
         nc_out = self.setup(nc_tasmax, outfp)
         ncvar_tas = nc_out.variables[self.variable_name]
 
-
-
         for i in range(var_tasmax.shape[0]):
             ncvar_tas[i,:,:] = (var_tasmax[i,:,:] + var_tasmin[i,:,:]) / 2
+
+        for nc in [nc_out, nc_tasmax, nc_tasmin]:
+            nc.close()
 
     def setup(self, nc_tasmax, outfp):
         cf = Cmip5File(outfp)
