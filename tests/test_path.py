@@ -14,5 +14,5 @@ def test_file_iter(cmip5_file_list, _filter, expected):
 def test_model_grouping(cmip5_file_list):
     groups = group_files_by_model_set(cmip5_file_list)
     assert len(groups) == 6
-    assert 'CanESM2_rcp45_r1i1p1' in groups.keys()
-    assert len(groups['CanESM2_rcp45_r1i1p1']) == 2
+    assert 'CanESM2_rcp45_r1i1p1_20060101-23001231' in groups.keys()
+    assert len(groups['CanESM2_rcp45_r1i1p1_20060101-23001231'].variables) == 2

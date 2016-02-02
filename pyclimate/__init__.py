@@ -189,12 +189,31 @@ def iter_matching_cmip5_file(file_iter, _filter=None):
         if fp in _filter:
             yield fp
 
+class ModelSet():
+
+    def __init__(self, model, experiment, run, t_start, t_end):
+        self.model = model
+        self.experiment = experiment
+        self.run = run
+        self.t_start = t_start
+        self.t_end = t_end
+        self.variables = {}
+
+    def add_variable(self, variable, dataset_fp):
+        self.variables[variable] = dataset_fp
+
 from collections import defaultdict
 
 def group_files_by_model_set(file_iter):
+
     model_sets = defaultdict(dict)
     for fp in file_iter:
         cf = Cmip5File(fp)
-        model_sets['{}_{}_{}'.format(cf.model, cf.experiment, cf.run)][cf.variable] = fp
+        key = '{}_{}_{}_{}-{}'.format(cf.model, cf.experiment, cf.run, cf.t_start, cf.t_end)
+
+        if key not in model_sets:
+            model_sets[key] = ModelSet(cf.model, cf.experiment, cf.run, cf.t_start, cf.t_end)
+
+        model_sets[key].add_variable(cf.variable, fp)
 
     return model_sets
