@@ -1,4 +1,5 @@
 import logging
+import ast
 
 from pyclimate import Cmip5File
 
@@ -37,10 +38,14 @@ class Filter(object):
 #     __metaclass__ = FilterMetaclass
 
     def __init__(self, _filter=None):
-        if _filter == 'pcic12':
-            self.filter = pcic12
+        preset = get_preset_filter('pcic12')
+        if preset:
+            self.filter = preset
         else:
-            self.filter = _filter
+            try:
+                self.filter = ast.literal_eval(_filter)
+            except Exception as e:
+                raise Exception('Unable to convert filter to python list of dictionaries')
 
     def __contains__(self, fp):
         '''
@@ -55,8 +60,14 @@ class Filter(object):
 
         return False
 
-# Define the PCIC models selected for best simulation of western North America
-pcic12 = [{'model': x.split()[0], 'run': x.split()[1], 'experiment': x.split()[2:]} for x in '''MPI-ESM-LR r3i1p1 historical rcp26 rcp45 rcp85
+def get_preset_filter(_filter):
+    if _filter in presets.keys():
+        return presets[_filter]
+    else:
+        return None
+
+
+presets= {'pcic12': [{'model': x.split()[0], 'run': x.split()[1], 'experiment': x.split()[2:]} for x in '''MPI-ESM-LR r3i1p1 historical rcp26 rcp45 rcp85
 inmcm4 r1i1p1 historical rcp26 rcp45 rcp85
 HadGEM2-ES r1i1p1 historical rcp26 rcp45 rcp85
 CanESM2 r1i1p1 historical rcp26 rcp45 rcp85
@@ -67,4 +78,4 @@ ACCESS1-0 r1i1p1 historical rcp26 rcp45 rcp85
 CNRM-CM5 r1i1p1 historical rcp26 rcp45 rcp85
 CCSM4 r2i1p1 historical rcp26 rcp45 rcp85
 HadGEM2-CC r1i1p1 historical rcp26 rcp45 rcp85
-GFDL-ESM2G r1i1p1 historical rcp26 rcp45 rcp85'''.split('\n')]
+GFDL-ESM2G r1i1p1 historical rcp26 rcp45 rcp85'''.split('\n')]}

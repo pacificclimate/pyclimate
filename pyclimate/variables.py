@@ -24,6 +24,9 @@ class DerivableBase(object):
     def add_base_variable(self, variable, dataset_fp):
         self.variables[variable] = dataset_fp
 
+    def derive_variable(self, variable, outdir):
+        print 'deriving var {}'.format(variable)
+
 class DerivedVariable(object):
     variable_name = ''
     required_vars = []
