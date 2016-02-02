@@ -1,9 +1,11 @@
+import os
 import warnings
 
 import numpy as np
 from netCDF4 import Dataset
 
 from pyclimate import Cmip5File
+from pyclimate.nchelpers import nc_copy_atts, nc_copy_var
 
 class DerivableBase(object):
     required_atts = ['model', 'experiment', 'run', 'trange']
@@ -25,24 +27,27 @@ class DerivableBase(object):
         self.variables[variable] = dataset_fp
 
     def derive_variable(self, variable, outdir):
-        print 'deriving var {}'.format(variable)
+        if variable == 'tas':
+            print 'deriving var {}'.format(variable)
+            t = tas(self.variables, outdir)
+            t()
 
 class DerivedVariable(object):
     variable_name = ''
     required_vars = []
 
-    def __init__(self, model_set, outdir):
-        self.model_set = model_set
+    def __init__(self, base_variables, outdir):
+        self.base_variables = base_variables
         self.outdir = outdir
 
     def has_required_vars(self, required_vars):
-        if not all([x in self.model_set.keys() for x in required_vars]):
+        if not all([x in self.base_variables.keys() for x in required_vars]):
             warnings.warn('Insufficient base variables to calculate {}'.format(self.variable_name))
             return False
         return True
 
-    def get_output_file_path(self, basevar):
-        cf = Cmip5File(self.model_set[basevar])
+    def get_output_file_path_from_base(self, basevar):
+        cf = Cmip5File(self.base_variables[basevar])
         cf.variable = self.variable_name
         cf.root = self.outdir
         return cf.fullpath
@@ -50,35 +55,46 @@ class DerivedVariable(object):
 class tas(DerivedVariable):
     variable_name = 'tas'
     required_vars = ['tasmax', 'tasmin']
+    variable_atts = {
+        'long_name': 'Near-Surface Air Temperature',
+        'standard_name': 'air_temperature',
+        'units': 'K',
+        'cell_methods': 'time: mean',
+        'cell_measures': 'area: areacella'
+    }
 
     def __call__(self):
-        if not self.has_required_vars(required_vars):
+        if not self.has_required_vars(self.required_vars):
             return 1
 
-        outfp = get_output_file_path_from_base(required_vars[0])
-        self.setup(outfp)
+        nc_tasmax = Dataset(self.base_variables['tasmax'])
+        var_tasmax = nc_tasmax.variables['tasmax']
 
-        nc_tasmax = Dataset(self.model_set['tasmax'])
-        nc_tasmin = Dataset(self.model_set['tasmin'])
+        nc_tasmin = Dataset(self.base_variables['tasmin'])
+        var_tasmin = nc_tasmin.variables['tasmin']
 
-        ncvar_tas[i,:,:] = (var_tasmax[i,:,:] + var_tasmin[i,:,:]) / 2
+        outfp = self.get_output_file_path_from_base(self.required_vars[0])
+        nc_out = self.setup(nc_tasmax, outfp)
+        ncvar_tas = nc_out.variables[self.variable_name]
 
-    def setup(nc_base, outfp):
+
+
+        for i in range(var_tasmax.shape[0]):
+            ncvar_tas[i,:,:] = (var_tasmax[i,:,:] + var_tasmin[i,:,:]) / 2
+
+    def setup(self, nc_tasmax, outfp):
         cf = Cmip5File(outfp)
 
         if not os.path.exists(cf.dirname):
             os.makedirs(cf.dirname)
 
         nc = Dataset(outfp, 'w')
-        ncvar = nc_copy_var(nc_source, nc, 'tasmax', 'tas', copy_attrs=True, copy_data=False)
-        nc_copy_atts(nc_source, nc) #copy global atts
-        ncvar.long_name = 'Near-Surface Air Temperature'
-        ncvar.standard_name = 'air_temperature'
-        ncvar.units = 'K'
-        ncvar.cell_methods = 'time: mean'
-        ncvar.cell_measures = 'area: areacella'
+        ncvar = nc_copy_var(nc_tasmax, nc, 'tasmax', self.variable_name, copy_attrs=True, copy_data=False)
+        nc_copy_atts(nc_tasmax, nc) #copy global atts
+        for k, v in self.variable_atts.items():
+            setattr(ncvar, k, v)
 
-        return nc, ncvar
+        return nc
 
 class gdd(object):
     def __call__():

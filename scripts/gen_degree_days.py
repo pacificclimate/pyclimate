@@ -81,17 +81,16 @@ def main(args):
 
     log.info(model_sets)
 
-    exit()
-
-    for i in range(len(model_sets)):
-        log.info("[{}/{}]".format(i, len(model_sets)))
-        derive(model_sets[i], args.outdir, args.variable)
+    for k, base in model_sets.items():
+        for variable in args.variable:
+            base.derive_variable(variable, args.outdir)
+            exit()
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('indir', help='Input directory')
-    parser.add_argument('outdir', help='Output directory')
+    parser.add_argument('-i', '--indir', help='Input directory')
+    parser.add_argument('-o', '--outdir', help='Output directory')
     parser.add_argument('-v', '--variable', nargs= '+',
                         choices=['tas', 'gdd', 'hdd', 'ffd', 'pas'],
                         help='Variable(s) to calculate. Ex: -v var1 var2 var3')
