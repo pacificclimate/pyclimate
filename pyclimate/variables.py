@@ -27,18 +27,33 @@ class DerivableBase(object):
         self.variables[variable] = dataset_fp
 
     def derive_variable(self, variable, outdir):
+        print 'deriving var {}'.format(variable)
         if variable == 'tas':
-            print 'deriving var {}'.format(variable)
             t = tas(self.variables, outdir)
-            t()
+        elif variable == 'gdd':
+            v = gdd(self.variables, outdir)
+        elif variable == 'hdd':
+            v = hdd(self.variables, outdir)
+        elif variable == 'ffd':
+            v = ffd(self.variables, outdir)
+        elif variable == 'pas':
+            v = pas(self.variables, outdir)
+        else:
+            return None
+        return v()
+
 
 class DerivedVariable(object):
-    variable_name = ''
-    required_vars = []
+    # variable_name = ''
+    # required_vars = []
+    # variable_atts = {}
 
     def __init__(self, base_variables, outdir):
         self.base_variables = base_variables
         self.outdir = outdir
+
+    def __call__(self):
+        raise NotImplemented
 
     def has_required_vars(self, required_vars):
         if not all([x in self.base_variables.keys() for x in required_vars]):
@@ -46,11 +61,33 @@ class DerivedVariable(object):
             return False
         return True
 
-    def get_output_file_path_from_base(self, basevar):
-        cf = Cmip5File(self.base_variables[basevar])
-        cf.variable = self.variable_name
-        cf.root = self.outdir
-        return cf.fullpath
+    @property
+    def base_varname(self):
+        return self.required_vars[0]
+
+
+def get_output_file_path_from_base(base_fp, new_varname, outdir=None):
+    cf = Cmip5File(base_fp)
+    cf.variable = new_varname
+    if outdir:
+        cf.root = outdir
+    return cf.fullpath
+
+
+def get_output_netcdf_from_base(base_nc, base_varname, new_varname, new_atts, outfp):
+    cf = Cmip5File(outfp)
+
+    if not os.path.exists(cf.dirname):
+        os.makedirs(cf.dirname)
+
+    new_nc = Dataset(outfp, 'w')
+    ncvar = nc_copy_var(base_nc, new_nc, base_varname, new_varname)
+    nc_copy_atts(base_nc, new_nc) #copy global atts
+    for k, v in new_atts.items():
+        setattr(ncvar, k, v)
+
+    return new_nc
+
 
 class tas(DerivedVariable):
     variable_name = 'tas'
@@ -73,8 +110,8 @@ class tas(DerivedVariable):
         nc_tasmin = Dataset(self.base_variables['tasmin'])
         var_tasmin = nc_tasmin.variables['tasmin']
 
-        outfp = self.get_output_file_path_from_base(self.required_vars[0])
-        nc_out = self.setup(nc_tasmax, outfp)
+        outfp = get_output_file_path_from_base(self.base_variables[self.base_varname], self.variable_name, self.outdir)
+        nc_out = get_output_netcdf_from_base(nc_tasmax, self.base_varname, self.variable_name, self.variable_atts, outfp)
         ncvar_tas = nc_out.variables[self.variable_name]
 
         for i in range(var_tasmax.shape[0]):
@@ -83,97 +120,126 @@ class tas(DerivedVariable):
         for nc in [nc_out, nc_tasmax, nc_tasmin]:
             nc.close()
 
-    def setup(self, nc_tasmax, outfp):
-        cf = Cmip5File(outfp)
+        return 0
 
-        if not os.path.exists(cf.dirname):
-            os.makedirs(cf.dirname)
+class gdd(DerivedVariable):
+    variable_name = 'gdd'
+    required_vars = ['tasmax', 'tasmin']
+    variable_atts = {
+        'units': 'degree days',
+        'long_name': 'Growing Degree Days'
+    }
 
-        nc = Dataset(outfp, 'w')
-        ncvar = nc_copy_var(nc_tasmax, nc, 'tasmax', self.variable_name, copy_attrs=True, copy_data=False)
-        nc_copy_atts(nc_tasmax, nc) #copy global atts
-        for k, v in self.variable_atts.items():
-            setattr(ncvar, k, v)
+    def __call__(self):
+        if not self.has_required_vars(self.required_vars):
+            return 1
 
-        return nc
+        nc_tasmax = Dataset(self.base_variables['tasmax'])
+        var_tasmax = nc_tasmax.variables['tasmax']
 
-class gdd(object):
-    def __call__():
-        pass
+        nc_tasmin = Dataset(self.base_variables['tasmin'])
+        var_tasmin = nc_tasmin.variables['tasmin']
 
-# def setup_gdd(nc_source, d, outdir):
+        outfp = get_output_file_path_from_base(self.base_variables[self.base_varname], self.variable_name, self.outdir)
+        nc_out = get_output_netcdf_from_base(nc_tasmax, self.base_varname, self.variable_name, self.variable_atts, outfp)
+        ncvar_gdd = nc_out.variables[self.variable_name]
 
-#     gdd = Cmip5File(**d)
-#     gdd.variable = 'gdd'
-#     gdd.root = outdir
-#     if not os.path.exists(gdd.dirname):
-#         os.makedirs(gdd.dirname)
+        for i in range(var_tasmax.shape[0]):
+            tas = (var_tasmax[i,:,:] + var_tasmin[i,:,:]) / 2
+            ncvar_gdd[i,:,:] = np.where(tas > 278.15, (tas - 278.15), 0)
 
-#     nc = Dataset(gdd.fullpath, 'w')
-#     ncvar = nc_copy_var(nc_source, nc, 'tasmax', 'gdd', copy_data=False)
-#     nc_copy_atts(nc_source, nc) #copy global atts
-#     ncvar.units = 'degree days'
-#     ncvar.long_name = 'Growing Degree Days'
+        for nc in [nc_out, nc_tasmax, nc_tasmin]:
+            nc.close()
 
-    # return nc, ncvar
-
-class hdd(object):
-    def __call__():
-        pass
-
-# def setup_hdd(nc_source, d, outdir):
-
-#     hdd = Cmip5File(**d)
-#     hdd.variable = 'hdd'
-#     hdd.root = outdir
-#     if not os.path.exists(hdd.dirname):
-#         os.makedirs(hdd.dirname)
-
-#     nc = Dataset(hdd.fullpath, 'w')
-#     ncvar = nc_copy_var(nc_source, nc, 'tasmax', 'hdd', copy_data=False)
-#     nc_copy_atts(nc_source, nc) #copy global atts
-#     ncvar.units = 'degree days'
-#     ncvar.long_name = 'Heating Degree Days'
-
-#     return nc, ncvar
+        return 0
 
 
-class ffd(object):
-    def __call__():
-        pass
+class hdd(DerivedVariable):
+    variable_name = 'hdd'
+    required_vars = ['tasmax', 'tasmin']
+    variable_atts = {
+        'units': 'degree days',
+        'long_name': 'Heating Degree Days'
+    }
 
-# def setup_ffd(nc_source, d, outdir):
+    def __call__(self):
+        if not self.has_required_vars(self.required_vars):
+            return 1
 
-#     ffd = Cmip5File(**d)
-#     ffd.variable = 'ffd'
-#     ffd.root = outdir
-#     if not os.path.exists(ffd.dirname):
-#         os.makedirs(ffd.dirname)
+        nc_tasmax = Dataset(self.base_variables['tasmax'])
+        var_tasmax = nc_tasmax.variables['tasmax']
 
-#     nc = Dataset(ffd.fullpath, 'w')
-#     ncvar = nc_copy_var(nc_source, nc, 'tasmax', 'ffd', copy_data=False)
-#     nc_copy_atts(nc_source, nc) #copy global atts
-#     ncvar.units = 'days'
-#     ncvar.long_name = 'Frost Free Days'
+        nc_tasmin = Dataset(self.base_variables['tasmin'])
+        var_tasmin = nc_tasmin.variables['tasmin']
 
-#     return nc, ncvar
+        outfp = get_output_file_path_from_base(self.base_variables[self.base_varname], self.variable_name, self.outdir)
+        nc_out = get_output_netcdf_from_base(nc_tasmax, self.base_varname, self.variable_name, self.variable_atts, outfp)
+        ncvar_hdd = nc_out.variables[self.variable_name]
 
-class pas(object):
-    def __call__():
-        pass
+        for i in range(var_tasmax.shape[0]):
+            tas = (var_tasmax[i,:,:] + var_tasmin[i,:,:]) / 2
+            ncvar_hdd[i,:,:] = np.where(tas < 291.15, np.absolute(tas - 291.15), 0)
 
-# def setup_pas(nc_source, d, outdir):
+        for nc in [nc_out, nc_tasmax, nc_tasmin]:
+            nc.close()
 
-#     pas = Cmip5File(**d)
-#     pas.variable = 'pas'
-#     pas.root = outdir
-#     if not os.path.exists(pas.dirname):
-#         os.makedirs(pas.dirname)
+        return 0
 
-#     nc = Dataset(pas.fullpath, 'w')
-#     ncvar = nc_copy_var(nc_source, nc, 'pr', 'pas', copy_data=False)
-#     nc_copy_atts(nc_source, nc) #copy global atts
-#     ncvar.units = 'days'
-#     ncvar.long_name = 'Frost Free Days'
 
-#     return nc, ncvar
+class ffd(DerivedVariable):
+    variable_name = 'ffd'
+    required_vars = ['tasmin']
+    variable_atts = {
+        'units': 'days',
+        'long_name': 'Frost Free Days'
+    }
+
+    def __call__(self):
+        if not self.has_required_vars(self.required_vars):
+            return 1
+
+        nc_tasmin = Dataset(self.base_variables['tasmin'])
+        var_tasmin = nc_tasmin.variables['tasmin']
+
+        outfp = get_output_file_path_from_base(self.base_variables[self.base_varname], self.variable_name, self.outdir)
+        nc_out = get_output_netcdf_from_base(nc_tasmin, self.base_varname, self.variable_name, self.variable_atts, outfp)
+        ncvar_ffd = nc_out.variables[self.variable_name]
+
+        for i in range(var_tasmin.shape[0]):
+            ncvar_ffd[i,:,:] = np.where(var_tasmin[i,:,:] > 273.15, 1, 0)
+
+        for nc in [nc_out, nc_tasmin]:
+            nc.close()
+
+        return 0
+
+
+class pas(DerivedVariable):
+    variable_name = 'pas'
+    required_vars = ['tasmax', 'pr']
+    variable_atts = {
+        'units': 'mm',
+        'long_name': 'Precip as snow'
+    }
+
+    def __call__(self):
+        if not self.has_required_vars(self.required_vars):
+            return 1
+
+        nc_tasmax = Dataset(self.base_variables['tasmax'])
+        var_tasmax = nc_tasmax.variables['tasmax']
+
+        nc_pr = Dataset(self.base_variables['pr'])
+        var_pr = nc_pr.variables['pr']
+
+        outfp = get_output_file_path_from_base(self.base_variables[self.base_varname], self.variable_name, self.outdir)
+        nc_out = get_output_netcdf_from_base(nc_tasmax, self.base_varname, self.variable_name, self.variable_atts, outfp)
+        ncvar_pas = nc_out.variables[self.variable_name]
+
+        for i in range(var_tasmax.shape[0]):
+            ncvar_pas[i,:,:] = np.where(var_tasmax[i,:,:] < 273.15, var_pr[i,:,:] , 0)
+
+        for nc in [nc_out, nc_tasmax]:
+            nc.close()
+
+        return 0
