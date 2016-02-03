@@ -27,9 +27,8 @@ class DerivableBase(object):
         self.variables[variable] = dataset_fp
 
     def derive_variable(self, variable, outdir):
-        print 'deriving var {}'.format(variable)
         if variable == 'tas':
-            t = tas(self.variables, outdir)
+            v = tas(self.variables, outdir)
         elif variable == 'gdd':
             v = gdd(self.variables, outdir)
         elif variable == 'hdd':
@@ -40,30 +39,7 @@ class DerivableBase(object):
             v = pas(self.variables, outdir)
         else:
             return None
-        return v()
-
-
-class DerivedVariable(object):
-    # variable_name = ''
-    # required_vars = []
-    # variable_atts = {}
-
-    def __init__(self, base_variables, outdir):
-        self.base_variables = base_variables
-        self.outdir = outdir
-
-    def __call__(self):
-        raise NotImplemented
-
-    def has_required_vars(self, required_vars):
-        if not all([x in self.base_variables.keys() for x in required_vars]):
-            warnings.warn('Insufficient base variables to calculate {}'.format(self.variable_name))
-            return False
-        return True
-
-    @property
-    def base_varname(self):
-        return self.required_vars[0]
+        return v
 
 
 def get_output_file_path_from_base(base_fp, new_varname, outdir=None):
@@ -89,6 +65,39 @@ def get_output_netcdf_from_base(base_nc, base_varname, new_varname, new_atts, ou
     return new_nc
 
 
+class DerivedVariable(object):
+
+    def __init__(self, base_variables, outdir, variable_name, required_vars, variable_atts):
+        self.base_variables = base_variables
+        self.outdir = outdir
+        self.variable_name = variable_name
+        self.required_vars = required_vars
+        self.variable_atts = variable_atts
+
+        if not all([x in self.base_variables.keys() for x in self.required_vars]):
+            return 1 #raise Exception('Insufficient base variables to calculate {}'.format(self.variable_name))
+
+    def __call__(self):
+        raise NotImplemented
+
+    def __str__(self):
+        return 'Generating {} with base variables {}'.format(type(self).__name__, self.base_variables.keys())
+
+    @property
+    def base_varname(self):
+        return self.required_vars[0]
+
+    @property
+    def outfp(self):
+        return get_output_file_path_from_base(self.base_variables[self.base_varname], self.variable_name, self.outdir)
+
+    def has_required_vars(self, required_vars):
+        if not all([x in self.base_variables.keys() for x in required_vars]):
+            warnings.warn('Insufficient base variables to calculate {}'.format(self.variable_name))
+            return False
+        return True
+
+
 class tas(DerivedVariable):
     variable_name = 'tas'
     required_vars = ['tasmax', 'tasmin']
@@ -100,6 +109,9 @@ class tas(DerivedVariable):
         'cell_measures': 'area: areacella'
     }
 
+    def __init__(self, base_variables, outdir):
+        super(tas, self).__init__(base_variables, outdir, self.variable_name, self.required_vars, self.variable_atts)
+
     def __call__(self):
         if not self.has_required_vars(self.required_vars):
             return 1
@@ -110,8 +122,7 @@ class tas(DerivedVariable):
         nc_tasmin = Dataset(self.base_variables['tasmin'])
         var_tasmin = nc_tasmin.variables['tasmin']
 
-        outfp = get_output_file_path_from_base(self.base_variables[self.base_varname], self.variable_name, self.outdir)
-        nc_out = get_output_netcdf_from_base(nc_tasmax, self.base_varname, self.variable_name, self.variable_atts, outfp)
+        nc_out = get_output_netcdf_from_base(nc_tasmax, self.base_varname, self.variable_name, self.variable_atts, self.outfp)
         ncvar_tas = nc_out.variables[self.variable_name]
 
         for i in range(var_tasmax.shape[0]):
@@ -122,6 +133,7 @@ class tas(DerivedVariable):
 
         return 0
 
+
 class gdd(DerivedVariable):
     variable_name = 'gdd'
     required_vars = ['tasmax', 'tasmin']
@@ -129,6 +141,9 @@ class gdd(DerivedVariable):
         'units': 'degree days',
         'long_name': 'Growing Degree Days'
     }
+
+    def __init__(self, base_variables, outdir):
+        super(gdd, self).__init__(base_variables, outdir, self.variable_name, self.required_vars, self.variable_atts)
 
     def __call__(self):
         if not self.has_required_vars(self.required_vars):
@@ -140,8 +155,7 @@ class gdd(DerivedVariable):
         nc_tasmin = Dataset(self.base_variables['tasmin'])
         var_tasmin = nc_tasmin.variables['tasmin']
 
-        outfp = get_output_file_path_from_base(self.base_variables[self.base_varname], self.variable_name, self.outdir)
-        nc_out = get_output_netcdf_from_base(nc_tasmax, self.base_varname, self.variable_name, self.variable_atts, outfp)
+        nc_out = get_output_netcdf_from_base(nc_tasmax, self.base_varname, self.variable_name, self.variable_atts, self.outfp)
         ncvar_gdd = nc_out.variables[self.variable_name]
 
         for i in range(var_tasmax.shape[0]):
@@ -162,6 +176,9 @@ class hdd(DerivedVariable):
         'long_name': 'Heating Degree Days'
     }
 
+    def __init__(self, base_variables, outdir):
+        super(hdd, self).__init__(base_variables, outdir, self.variable_name, self.required_vars, self.variable_atts)
+
     def __call__(self):
         if not self.has_required_vars(self.required_vars):
             return 1
@@ -172,8 +189,7 @@ class hdd(DerivedVariable):
         nc_tasmin = Dataset(self.base_variables['tasmin'])
         var_tasmin = nc_tasmin.variables['tasmin']
 
-        outfp = get_output_file_path_from_base(self.base_variables[self.base_varname], self.variable_name, self.outdir)
-        nc_out = get_output_netcdf_from_base(nc_tasmax, self.base_varname, self.variable_name, self.variable_atts, outfp)
+        nc_out = get_output_netcdf_from_base(nc_tasmax, self.base_varname, self.variable_name, self.variable_atts, self.outfp)
         ncvar_hdd = nc_out.variables[self.variable_name]
 
         for i in range(var_tasmax.shape[0]):
@@ -194,6 +210,9 @@ class ffd(DerivedVariable):
         'long_name': 'Frost Free Days'
     }
 
+    def __init__(self, base_variables, outdir):
+        super(ffd, self).__init__(base_variables, outdir, self.variable_name, self.required_vars, self.variable_atts)
+
     def __call__(self):
         if not self.has_required_vars(self.required_vars):
             return 1
@@ -201,8 +220,7 @@ class ffd(DerivedVariable):
         nc_tasmin = Dataset(self.base_variables['tasmin'])
         var_tasmin = nc_tasmin.variables['tasmin']
 
-        outfp = get_output_file_path_from_base(self.base_variables[self.base_varname], self.variable_name, self.outdir)
-        nc_out = get_output_netcdf_from_base(nc_tasmin, self.base_varname, self.variable_name, self.variable_atts, outfp)
+        nc_out = get_output_netcdf_from_base(nc_tasmin, self.base_varname, self.variable_name, self.variable_atts, self.outfp)
         ncvar_ffd = nc_out.variables[self.variable_name]
 
         for i in range(var_tasmin.shape[0]):
@@ -222,6 +240,9 @@ class pas(DerivedVariable):
         'long_name': 'Precip as snow'
     }
 
+    def __init__(self, base_variables, outdir):
+        super(pas, self).__init__(base_variables, outdir, self.variable_name, self.required_vars, self.variable_atts)
+
     def __call__(self):
         if not self.has_required_vars(self.required_vars):
             return 1
@@ -232,8 +253,7 @@ class pas(DerivedVariable):
         nc_pr = Dataset(self.base_variables['pr'])
         var_pr = nc_pr.variables['pr']
 
-        outfp = get_output_file_path_from_base(self.base_variables[self.base_varname], self.variable_name, self.outdir)
-        nc_out = get_output_netcdf_from_base(nc_tasmax, self.base_varname, self.variable_name, self.variable_atts, outfp)
+        nc_out = get_output_netcdf_from_base(nc_tasmax, self.base_varname, self.variable_name, self.variable_atts, self.outfp)
         ncvar_pas = nc_out.variables[self.variable_name]
 
         for i in range(var_tasmax.shape[0]):
