@@ -38,14 +38,17 @@ class Filter(object):
 #     __metaclass__ = FilterMetaclass
 
     def __init__(self, _filter=None):
-        preset = get_preset_filter('pcic12')
+        preset = get_preset_filter(_filter)
         if preset:
             self.filter = preset
-        else:
+        elif type(_filter) == str:
             try:
                 self.filter = ast.literal_eval(_filter)
             except Exception as e:
                 raise Exception('Unable to convert filter to python list of dictionaries')
+        else:
+            self.filter = _filter
+
 
     def __contains__(self, fp):
         '''
