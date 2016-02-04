@@ -8,9 +8,31 @@ from pyclimate import Cmip5File
 from pyclimate.nchelpers import nc_copy_atts, nc_copy_var
 
 class DerivableBase(object):
+    """Reprents a group of base variables.
+
+    Grouped base variables are used to initiate calculating derived variables.
+
+    Attributes:
+        model (str): Model name. Typically the model_id attribute from the source NetCDF
+        experiment (str): Experiment name. Typically the 'experiment' attribute from a source NetCDF
+            eg: 'historical', 'rcp26'
+        run (str): Run id.
+            eg: 'r1i1p1', r2i1p1'
+        trange (str): Temporal range of data contained in the base data. Format YYYYMMDD-YYYYMMDD
+            eg: '20060101-21991231'
+    """
     required_atts = ['model', 'experiment', 'run', 'trange']
 
     def __init__(self, **kwargs):
+        """Initializes a `DerivableBase`
+
+        Dynamically stores whatever args are supplied by a user.
+
+        Note:
+            While not strictly enforced, `model`, `experiment`, `run`, `trange` /should/
+            be sufficient to uniquely group a set of variables. If required, a user can
+            supply additional attributes to further define a grouping.
+        """
         for att in self.required_atts:
             try:
                 v = kwargs.pop(att)
@@ -24,9 +46,30 @@ class DerivableBase(object):
         self.variables = {}
 
     def add_base_variable(self, variable, dataset_fp):
+        """Adds base variable to the DerivableBase instance.
+
+        Args:
+            variable (str): The CMIP5 variable name being added.
+            dataset_fp (str): The location of the file.
+
+        Returns:
+            None
+        """
         self.variables[variable] = dataset_fp
 
     def derive_variable(self, variable, outdir):
+        """Entry point to calculate derived variables from a ``DerivableBase`` class.
+
+        Args:
+            variable (str): Short name of the variable to generate.
+            outdir (str): Root directory to place output file.
+
+        Returns:
+            A variable specific subclass of DerivableBase.
+
+        Raises:
+            None.
+        """
         if variable == 'tas':
             v = tas(self.variables, outdir)
         elif variable == 'gdd':
@@ -43,6 +86,15 @@ class DerivableBase(object):
 
 
 def get_output_file_path_from_base(base_fp, new_varname, outdir=None):
+    """Generates a new file path from an existing template using a different variable
+
+    Args:
+        base_fp (str): base filename to use as template
+        new_varname (str): new variable name
+
+    Returns:
+        str: the new filename
+    """
     cf = Cmip5File(base_fp)
     cf.variable = new_varname
     if outdir:
@@ -51,6 +103,21 @@ def get_output_file_path_from_base(base_fp, new_varname, outdir=None):
 
 
 def get_output_netcdf_from_base(base_nc, base_varname, new_varname, new_atts, outfp):
+    """Prepares a blank NetCDF file for a new variable
+
+    Copies structure and attributes of an existing NetCDF into a new NetCDF
+    alterting varialbe specific metadata
+
+    Args:
+        base_nc (netCDF4.Dataset): Source netCDF file as returned by netCDF4.Dataset.
+        base_varname (str): Source variable to copy structure from.
+        new_varname (str): New variable name.
+        new_atts (dict): Attributes to assign to the new variable.
+        out_fp (str): Location to create the new netCDF4.Dataset
+
+    Returns:
+        netCDF4.Dataset: The new netCDF4.Dataset
+    """
     cf = Cmip5File(outfp)
 
     if not os.path.exists(cf.dirname):
@@ -73,9 +140,6 @@ class DerivedVariable(object):
         self.variable_name = variable_name
         self.required_vars = required_vars
         self.variable_atts = variable_atts
-
-        if not all([x in self.base_variables.keys() for x in self.required_vars]):
-            return 1 #raise Exception('Insufficient base variables to calculate {}'.format(self.variable_name))
 
     def __call__(self):
         raise NotImplemented
