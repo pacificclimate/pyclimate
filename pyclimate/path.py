@@ -42,7 +42,7 @@ def group_files_by_model_set(file_iter):
         key = '{}_{}_{}_{}-{}'.format(cf.model, cf.experiment, cf.run, cf.t_start, cf.t_end)
 
         if key not in model_sets:
-            model_sets[key] = DerivableBase(**{k: cf.__dict__[k] for k in ('institute', 'model', 'experiment', 'freq', 'realm', 'mip', 'run', 'version', 'variable', 'trange')})
+            model_sets[key] = DerivableBase(**{k: cf.__dict__[k] for k in ('institute', 'model', 'experiment', 'freq', 'realm', 'mip', 'run', 'version', 'trange')})
 
         model_sets[key].add_base_variable(cf.variable, fp)
 
