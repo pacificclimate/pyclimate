@@ -3,9 +3,9 @@ import fnmatch
 
 from collections import defaultdict
 
-from pyclimate import Cmip5File
-from filters import Filter
-from variables import DerivableBase
+from cfmeta import Cmip5File
+from pyclimate.filters import Filter
+from pyclimate.variables import DerivableBase
 
 
 def iter_netcdf_files(base_dir, pattern="*.nc"):
@@ -38,12 +38,12 @@ def group_files_by_model_set(file_iter):
 
     model_sets = defaultdict(dict)
     for fp in file_iter:
-        cf = Cmip5File(fp)
-        key = '{}_{}_{}_{}-{}'.format(cf.model, cf.experiment, cf.run, cf.t_start, cf.t_end)
+        cf = Cmip5File(datanode_fp = fp)
+        key = '{}_{}_{}_{}-{}'.format(cf.model, cf.experiment, cf.ensemble_member, cf.t_start, cf.t_end)
 
         if key not in model_sets:
-            model_sets[key] = DerivableBase(**{k: cf.__dict__[k] for k in ('institute', 'model', 'experiment', 'freq', 'realm', 'mip', 'run', 'version', 'trange')})
+            model_sets[key] = DerivableBase(**{k: cf.__dict__[k] for k in ('institute', 'model', 'experiment', 'frequency', 'modeling_realm', 'mip_table', 'ensemble_member', 'version_number', 'temporal_subset')})
 
-        model_sets[key].add_base_variable(cf.variable, fp)
+        model_sets[key].add_base_variable(cf.variable_name, fp)
 
     return model_sets

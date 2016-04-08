@@ -8,13 +8,13 @@ import multiprocessing
 
 import numpy as np
 from netCDF4 import Dataset
+from cfmet import Cmip5File
 
-from pyclimate import Cmip5File, Consumer
+from pyclimate import Consumer
 from pyclimate.path import iter_netcdf_files, group_files_by_model_set, iter_matching_cmip5_file
 from pyclimate.nchelpers import *
 
 log = logging.getLogger(__name__)
-
 
 def main(args):
     base_dir = args.indir

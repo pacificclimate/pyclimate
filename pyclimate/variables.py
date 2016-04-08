@@ -4,7 +4,7 @@ import warnings
 import numpy as np
 from netCDF4 import Dataset
 
-from pyclimate import Cmip5File
+from cfmeta import Cmip5File
 from pyclimate.nchelpers import nc_copy_atts, nc_copy_var
 
 class DerivableBase(object):
@@ -16,20 +16,23 @@ class DerivableBase(object):
         model (str): Model name. Typically the model_id attribute from the source NetCDF
         experiment (str): Experiment name. Typically the 'experiment' attribute from a source NetCDF
             eg: 'historical', 'rcp26'
-        run (str): Run id.
+        ensemble_member (str): Ensemble member id.
             eg: 'r1i1p1', r2i1p1'
         trange (str): Temporal range of data contained in the base data. Format YYYYMMDD-YYYYMMDD
             eg: '20060101-21991231'
     """
-    required_atts = ['model', 'experiment', 'run', 'trange']
+    required_atts = ['model', 'experiment', 'ensemble_member', 'temporal_subset']
 
     def __init__(self, **kwargs):
         """Initializes a `DerivableBase`
 
         Dynamically stores whatever args are supplied by a user.
 
+        Args:
+            **kwargs: Attributes defining `DerivableBase`
+
         Note:
-            While not strictly enforced, `model`, `experiment`, `run`, `trange` /should/
+            While not strictly enforced, `model`, `experiment`, `ensemble_member`, `temporal_subset` /should/
             be sufficient to uniquely group a set of variables. If required, a user can
             supply additional attributes to further define a grouping.
         """
@@ -133,8 +136,27 @@ def get_output_netcdf_from_base(base_nc, base_varname, new_varname, new_atts, ou
 
 
 class DerivedVariable(object):
+    """Used as a parent for all derived variables.
+
+    Stores variable specific information and provides common methods.
+    
+    Attributes:
+        base_variables (dict): Dictionary mapping base variable name to file location.
+            eg: {'pr': 'path/to/pr/variable.nc',
+                 'tasmax': 'path/to/tasmax/variable.nc'}
+        outdir (str): Location to put the generated NetCDF.
+        variable_name (str): Derived variable name.
+        required_vars (list): List of variables required by the specific derived variable
+        variable_atts (dict): Attributes to set on the derived variable
+    """
 
     def __init__(self, base_variables, outdir, variable_name, required_vars, variable_atts):
+        """Initializes a ``DerivedVariable`` class
+
+        Args:
+            Same as ``Attributes``
+
+        """
         self.base_variables = base_variables
         self.outdir = outdir
         self.variable_name = variable_name
@@ -142,6 +164,8 @@ class DerivedVariable(object):
         self.variable_atts = variable_atts
 
     def __call__(self):
+        """__call__ method should be overridden by a child class
+        """
         raise NotImplemented
 
     def __str__(self):
@@ -149,10 +173,14 @@ class DerivedVariable(object):
 
     @property
     def base_varname(self):
+        """Used to set which base variable to use as a template.
+        """
         return self.required_vars[0]
 
     @property
-    def outfp(self):
+    def outfp(self): 
+        """Generates a string
+        """
         return get_output_file_path_from_base(self.base_variables[self.base_varname], self.variable_name, self.outdir)
 
     def has_required_vars(self, required_vars):

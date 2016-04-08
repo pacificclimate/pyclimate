@@ -1,7 +1,7 @@
 import logging
 import ast
 
-from pyclimate import Cmip5File
+from cfmeta import Cmip5File
 
 '''
 A filter is a list of dictionaries. Each dictionary is keyed to Cmip5File attributes
