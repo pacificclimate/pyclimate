@@ -220,7 +220,7 @@ class tas(DerivedVariable):
         for nc in [nc_out, nc_tasmax, nc_tasmin]:
             nc.close()
 
-        return 0
+        return outfp
 
 
 class gdd(DerivedVariable):
@@ -254,7 +254,7 @@ class gdd(DerivedVariable):
         for nc in [nc_out, nc_tasmax, nc_tasmin]:
             nc.close()
 
-        return 0
+        return outfp
 
 
 class hdd(DerivedVariable):
@@ -288,7 +288,7 @@ class hdd(DerivedVariable):
         for nc in [nc_out, nc_tasmax, nc_tasmin]:
             nc.close()
 
-        return 0
+        return outfp
 
 
 class ffd(DerivedVariable):
@@ -318,7 +318,7 @@ class ffd(DerivedVariable):
         for nc in [nc_out, nc_tasmin]:
             nc.close()
 
-        return 0
+        return outfp
 
 
 class pas(DerivedVariable):
@@ -351,4 +351,4 @@ class pas(DerivedVariable):
         for nc in [nc_out, nc_tasmax]:
             nc.close()
 
-        return 0
+        return outfp
