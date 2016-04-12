@@ -56,7 +56,7 @@ class Filter(object):
         '''
         if not self.filter: return True
 
-        cf = Cmip5File(fp)
+        cf = Cmip5File(datanode_fp = fp)
         for entry in self.filter:
             if all([(hasattr(cf, att) and (getattr(cf, att) == val or getattr(cf, att) in val)) for att, val in entry.items()]):
                 return True
@@ -70,7 +70,7 @@ def get_preset_filter(_filter):
         return None
 
 
-presets= {'pcic12': [{'model': x.split()[0], 'run': x.split()[1], 'experiment': x.split()[2:]} for x in '''MPI-ESM-LR r3i1p1 historical rcp26 rcp45 rcp85
+presets= {'pcic12': [{'model': x.split()[0], 'ensemble_member': x.split()[1], 'experiment': x.split()[2:]} for x in '''MPI-ESM-LR r3i1p1 historical rcp26 rcp45 rcp85
 inmcm4 r1i1p1 historical rcp26 rcp45 rcp85
 HadGEM2-ES r1i1p1 historical rcp26 rcp45 rcp85
 CanESM2 r1i1p1 historical rcp26 rcp45 rcp85

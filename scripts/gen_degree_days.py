@@ -8,7 +8,7 @@ import multiprocessing
 
 import numpy as np
 from netCDF4 import Dataset
-from cfmet import Cmip5File
+from cfmeta import Cmip5File
 
 from pyclimate import Consumer
 from pyclimate.path import iter_netcdf_files, group_files_by_model_set, iter_matching_cmip5_file
@@ -52,7 +52,7 @@ def main(args):
     while num_jobs:
         result = results.get()
         num_jobs -= 1
-        print str(num_jobs) + ' Jobs left'
+        print(str(num_jobs) + ' Jobs left')
 
 
 if __name__ == '__main__':

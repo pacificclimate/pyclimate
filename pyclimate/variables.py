@@ -98,12 +98,9 @@ def get_output_file_path_from_base(base_fp, new_varname, outdir=None):
     Returns:
         str: the new filename
     """
-    cf = Cmip5File(base_fp)
-    cf.variable = new_varname
-    if outdir:
-        cf.root = outdir
-    return cf.fullpath
-
+    cf = Cmip5File(datanode_fp = base_fp)
+    cf.update(variable_name = new_varname)
+    return os.path.join(outdir, cf.datanode_fp)
 
 def get_output_netcdf_from_base(base_nc, base_varname, new_varname, new_atts, outfp):
     """Prepares a blank NetCDF file for a new variable
@@ -123,8 +120,8 @@ def get_output_netcdf_from_base(base_nc, base_varname, new_varname, new_atts, ou
     """
     cf = Cmip5File(outfp)
 
-    if not os.path.exists(cf.dirname):
-        os.makedirs(cf.dirname)
+    if not os.path.exists(os.path.dirname(outfp)):
+        os.makedirs(os.path.dirname(outfp))
 
     new_nc = Dataset(outfp, 'w')
     ncvar = nc_copy_var(base_nc, new_nc, base_varname, new_varname)
